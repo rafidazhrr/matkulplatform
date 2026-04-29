@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="id" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Katalog Laptop Murmer</title>
+    <!-- Memanggil Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memanggil Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#8b5cf6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="AppToko" />
+    <link rel="apple-touch-icon" href="icons/image.png" />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              display: ["Outfit", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        background-color: #0b1120;
+        background-image:
+          radial-gradient(
+            circle at 20% 0%,
+            rgba(16, 185, 129, 0.15) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 80% 100%,
+            rgba(6, 182, 212, 0.1) 0%,
+            transparent 40%
+          );
+        background-attachment: fixed;
+        background-size: cover;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #0b1120;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #1e293b;
+        border-radius: 5px;
+        border: 2px solid #0b1120;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #334155;
+      }
+
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+
+  <body
+    class="min-h-screen text-slate-200 font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200 overflow-x-hidden relative flex flex-col"
+  >
+    <!-- Efek Latar Belakang Dekoratif -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+      <div
+        class="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-emerald-500/5 to-transparent blur-[120px] transform rotate-12"
+      ></div>
+    </div>
+
+    <!-- Header -->
+    <header
+      class="relative z-10 pt-24 pb-12 text-center animate-[fadeInDown_1s_ease-out]"
+    >
+      <h1
+        class="text-5xl md:text-7xl font-extrabold font-display mb-6 tracking-tight px-4 drop-shadow-lg"
+      >
+        <span class="text-white">Daftar</span>
+        <span
+          class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500"
+        >
+          Laptop Murah
+        </span>
+      </h1>
+      <p
+        class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto font-light leading-relaxed px-6"
+      >
+        Selamat datang di toko RAFMART, disini menyediakan beberapa list harga
+        laptop yang sangat murah
+      </p>
+    </header>
+
+    <!-- Main Content -->
+    <main
+      class="max-w-[1400px] w-full mx-auto px-6 md:px-8 pb-32 relative z-10 flex-grow"
+    >
+      <!-- Form Tambah Barang -->
+      <div
+        class="bg-slate-800/40 backdrop-blur-xl p-6 border border-slate-700/50 rounded-3xl mb-10 animate-[fadeInUp_0.6s_ease-out]"
+      >
+        <h2
+          class="text-lg font-bold text-white font-display mb-4 flex items-center gap-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="text-emerald-400"
+          >
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+          Tambah Barang Baru
+        </h2>
+
+        <form id="form-tambah" class="flex flex-col md:flex-row gap-4">
+          <div class="flex-1">
+            <label class="block text-xs text-slate-400 font-bold uppercase mb-1"
+              >Nama Barang</label
+            >
+            <input
+              type="text"
+              id="input-nama"
+              class="w-full bg-slate-900/50 border border-slate-600/50 text-slate-200 p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 placeholder-slate-500 transition-all duration-300"
+              placeholder="Masukkan nama barang"
+              required
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs text-slate-400 font-bold uppercase mb-1"
+              >Harga (Rp)</label
+            >
+            <input
+              type="number"
+              id="input-harga"
+              class="w-full bg-slate-900/50 border border-slate-600/50 text-slate-200 p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 placeholder-slate-500 transition-all duration-300"
+              placeholder="Masukkan harga barang"
+              required
+            />
+          </div>
+          <div class="flex flex-col justify-end">
+            <button
+              type="submit"
+              class="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white font-bold py-2.5 px-8 rounded-xl transition-all duration-300 hover:shadow-[0_5px_20px_-5px_rgba(16,185,129,0.4)] h-[44px]"
+            >
+              Simpan
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Search Bar: Cari Barang -->
+      <div
+        class="bg-slate-800/30 backdrop-blur-xl p-4 border border-slate-700/40 rounded-3xl mb-8 animate-[fadeInUp_0.6s_ease-out]"
+      >
+        <label
+          for="input-search"
+          class="block text-sm font-bold text-slate-300 mb-2"
+          >Cari Barang</label
+        >
+        <div class="flex items-center gap-3">
+          <input
+            id="input-search"
+            type="search"
+            placeholder="Masukkan nama barang yang akan dicari"
+            class="flex-1 bg-slate-900/50 border border-slate-600/50 text-slate-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+          />
+          <button
+            id="btn-clear-search"
+            type="button"
+            class="bg-slate-700/40 text-slate-200 px-4 py-2 rounded-xl hover:bg-slate-700/60 transition"
+          >
+            Bersihkan
+          </button>
+        </div>
+      </div>
+
+      <!-- Container Grid (Masih menggunakan id tabel-barang agar JS tetap nyambung) -->
+      <div
+        id="tabel-barang"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 min-h-[400px]"
+      >
+        <!-- Tampilan Loading Eksklusif sebelum JS merender data -->
+        <div
+          class="col-span-full flex flex-col items-center justify-center py-20 opacity-70"
+        >
+          <div class="relative w-24 h-24 mb-8">
+            <div
+              class="absolute inset-0 rounded-full border-4 border-slate-800"
+            ></div>
+            <div
+              class="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"
+            ></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div
+                class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"
+              ></div>
+            </div>
+          </div>
+          <p
+            class="text-slate-400 font-display tracking-widest uppercase text-sm animate-pulse"
+          >
+            Mempersiapkan Etalase Mewah...
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer
+      class="relative z-10 py-8 border-t border-slate-800/50 mt-auto backdrop-blur-md bg-slate-900/30"
+    >
+      <div class="text-center">
+        <p class="text-slate-500 text-sm font-medium">
+          RafidAzmiH • UmPontianak
+        </p>
+      </div>
+    </footer>
+
+    <!-- Memanggil file logika JS -->
+    <script src="app.js"></script>
+
+    <!-- Register Service Worker untuk PWA -->
+    <script>
+      // Register Service Worker
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("./sw.js")
+          .then((reg) => {
+            console.log("Service Worker registered successfully:", reg);
+          })
+          .catch((err) => {
+            console.log("Service Worker registration failed:", err);
+          });
+      }
+
+      // Install Prompt Handler
+      let deferredPrompt;
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log("Install prompt ready!");
+        // Tampilkan tombol install (jika ada)
+        const installBtn = document.getElementById("install-btn");
+        if (installBtn) {
+          installBtn.style.display = "block";
+          installBtn.addEventListener("click", async () => {
+            if (deferredPrompt) {
+              deferredPrompt.prompt();
+              const { outcome } = await deferredPrompt.userChoice;
+              console.log(`User response to the install prompt: ${outcome}`);
+              deferredPrompt = null;
+              installBtn.style.display = "none";
+            }
+          });
+        }
+      });
+
+      window.addEventListener("appinstalled", () => {
+        console.log("PWA was installed successfully");
+        deferredPrompt = null;
+      });
+    </script>
+  </body>
+</html>
