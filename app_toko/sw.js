@@ -1,12 +1,10 @@
 const CACHE_NAME = "toko-pwa-v1";
 const urlsToCache = [
-  "/",
-  "/app_toko/",
-  "/app_toko/index.html",
-  "/app_toko/app.js",
-  "/app_toko/manifest.json",
-  "/app_toko/icons/image.png",
-  "/manifest.json",
+  "./",
+  "index.html",
+  "app.js",
+  "manifest.json",
+  "icons/image.png",
 ];
 
 // 1. INSTALL: cache aset penting
@@ -67,7 +65,7 @@ self.addEventListener("fetch", (event) => {
         .catch(() =>
           caches
             .match(event.request)
-            .then((resp) => resp || caches.match("/app_toko/index.html")),
+            .then((resp) => resp || caches.match("index.html")),
         ),
     );
     return;
@@ -78,7 +76,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(event.request)
         .then((response) => response)
-        .catch(() => caches.match("/app_toko/index.html")),
+        .catch(() => caches.match("index.html")),
     );
     return;
   }
@@ -105,7 +103,7 @@ self.addEventListener("fetch", (event) => {
           });
           return networkResponse;
         })
-        .catch(() => caches.match("/app_toko/index.html"));
+        .catch(() => caches.match("index.html"));
     }),
   );
 });
