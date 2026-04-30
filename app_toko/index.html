@@ -97,12 +97,120 @@
           transform: translateY(0);
         }
       }
+
+      /* Toast install animation + visual polish */
+      @keyframes toastSlideDown {
+        0% {
+          transform: translateY(-22px) scale(0.995);
+          opacity: 0;
+        }
+        70% {
+          transform: translateY(6px) scale(1.002);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes pulseBadge {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.02);
+          opacity: 0.96;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* Target only the install toast inside the page */
+      #install-btn > div {
+        transform-origin: top center;
+        animation: toastSlideDown 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        animation-delay: 120ms;
+        transition:
+          transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1),
+          box-shadow 220ms cubic-bezier(0.2, 0.9, 0.2, 1),
+          opacity 220ms ease;
+        will-change: transform, opacity;
+        cursor: pointer;
+      }
+
+      #install-btn > div:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 18px 50px -12px rgba(16, 185, 129, 0.28);
+      }
+
+      /* Make the small CTA badge more lively */
+      #install-btn > div span {
+        animation: pulseBadge 2.6s ease-in-out 700ms infinite;
+        display: inline-block;
+        transform-origin: center;
+      }
     </style>
   </head>
 
   <body
     class="min-h-screen text-slate-200 font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200 overflow-x-hidden relative flex flex-col"
   >
+    <!-- Tombol Install Mengambang (top-center) - tampilan seperti notifikasi toast -->
+    <div
+      class="fixed inset-x-0 top-6 z-50 flex justify-center pointer-events-none"
+    >
+      <div
+        id="install-btn"
+        style="display: none; pointer-events: auto"
+        role="status"
+        aria-live="polite"
+        class="max-w-md w-full px-4"
+      >
+        <div
+          class="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-2xl shadow-[0_16px_40px_-12px_rgba(16,185,129,0.25)] px-4 py-3 flex items-center justify-between gap-3 pointer-events-auto"
+        >
+          <div class="flex items-center gap-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-5 h-5 flex-shrink-0 stroke-white"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 5v14m7-7H5"
+              />
+            </svg>
+            <div class="text-sm font-semibold">
+              Pasang aplikasi untuk akses cepat
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span
+              class="text-sm text-white/90 bg-white/10 px-3 py-1 rounded-md font-medium"
+              >Pasang</span
+            >
+            <button
+              aria-label="Tutup"
+              class="text-white/90 hover:text-white text-xl leading-none -mr-1"
+              onclick="
+                event.stopPropagation();
+                document.getElementById('install-btn').style.display = 'none';
+              "
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Efek Latar Belakang Dekoratif -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
       <div
@@ -276,23 +384,30 @@
       // Install Prompt Handler
       let deferredPrompt;
       window.addEventListener("beforeinstallprompt", (e) => {
+        const installBtn = document.getElementById("install-btn");
+        if (!installBtn) {
+          // No custom install button — allow browser to show default prompt.
+          console.log(
+            "Install prompt available; no custom install button — allowing browser default.",
+          );
+          // Keep a reference in case needed later, but do not prevent default.
+          deferredPrompt = e;
+          return;
+        }
+        // Custom install button present — prevent default and show custom flow.
         e.preventDefault();
         deferredPrompt = e;
         console.log("Install prompt ready!");
-        // Tampilkan tombol install (jika ada)
-        const installBtn = document.getElementById("install-btn");
-        if (installBtn) {
-          installBtn.style.display = "block";
-          installBtn.addEventListener("click", async () => {
-            if (deferredPrompt) {
-              deferredPrompt.prompt();
-              const { outcome } = await deferredPrompt.userChoice;
-              console.log(`User response to the install prompt: ${outcome}`);
-              deferredPrompt = null;
-              installBtn.style.display = "none";
-            }
-          });
-        }
+        installBtn.style.display = "block";
+        installBtn.addEventListener("click", async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            deferredPrompt = null;
+            installBtn.style.display = "none";
+          }
+        });
       });
 
       window.addEventListener("appinstalled", () => {
