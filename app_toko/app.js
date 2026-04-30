@@ -97,19 +97,19 @@ function showToast(message, type = "success") {
 
     const toast = document.createElement("div");
     toast.setAttribute("role", "status");
-    toast.className = `fixed right-6 bottom-6 z-50 pointer-events-auto max-w-sm w-full rounded-2xl px-5 py-3 text-white shadow-lg bg-gradient-to-r ${gradient}`;
+    toast.className = `fixed right-6 bottom-6 z-50 pointer-events-auto max-w-sm w-full rounded-xl px-5 py-3 text-white shadow-[0_10px_30px_-10px_rgba(16,185,129,0.25)] border border-emerald-600/20 bg-gradient-to-r ${gradient} font-semibold`;
     // initial inline styles for animation
     toast.style.opacity = "0";
     toast.style.transform = "translateY(10px)";
     toast.style.transition = "opacity 260ms ease, transform 260ms ease";
 
     toast.innerHTML = `
-      <div class="flex items-center gap-3 text-sm font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="flex items-center gap-3 text-sm font-semibold">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0 stroke-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
         </svg>
         <div class="flex-1">${message}</div>
-        <button class="ml-3 text-white/80 hover:text-white close-toast" aria-label="Tutup">×</button>
+        <button class="ml-3 text-white/90 hover:text-white close-toast px-2 py-1 rounded-lg" aria-label="Tutup">×</button>
       </div>
     `;
 
@@ -130,9 +130,8 @@ function showToast(message, type = "success") {
     }
 
     // close button
-    toast
-      .querySelector(".close-toast")
-      .addEventListener("click", () => hideToast(toast));
+    const closeBtn = toast.querySelector(".close-toast");
+    if (closeBtn) closeBtn.addEventListener("click", () => hideToast(toast));
 
     // auto dismiss
     setTimeout(() => hideToast(toast), 3500);
@@ -145,7 +144,7 @@ function showToast(message, type = "success") {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("sw.js")
+      .register("./sw.js")
       .then((registration) => {
         console.log("Service Worker Berhasil Didaftarkan!", registration.scope);
       })
@@ -197,7 +196,6 @@ formTambah.addEventListener("submit", async function (event) {
 
 // Search: filter items client-side (debounced)
 const inputSearch = document.getElementById("input-search");
-const btnClearSearch = document.getElementById("btn-clear-search");
 let searchTimeout = null;
 if (inputSearch) {
   inputSearch.addEventListener("input", (e) => {
@@ -216,13 +214,5 @@ if (inputSearch) {
       });
       renderBarang(filtered);
     }, 180);
-  });
-}
-
-if (btnClearSearch) {
-  btnClearSearch.addEventListener("click", () => {
-    if (inputSearch) inputSearch.value = "";
-    renderBarang(barangData);
-    if (inputSearch) inputSearch.focus();
   });
 }
