@@ -75,6 +75,23 @@ function renderBarang(items) {
                 ${hargaFormatted}
               </span>
             </div>
+            <div class="relative mt-6 flex justify-end z-10 space-x-3">
+              <!-- Tombol Edit (sesuai tema: emerald->cyan) -->
+              <button onclick="editBarang(${barang.id})" class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white px-3 py-2 rounded-lg shadow-sm transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M3 21l4.768-1.265 12.238-12.239L15.232 5.232 2 18.464V21z" />
+                </svg>
+                Edit
+              </button>
+
+              <!-- Tombol Hapus yang mengikuti tema (gradien + radius) -->
+              <button onclick="hapusBarang(${barang.id})" class="inline-flex items-center gap-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-3 py-2 rounded-lg shadow-sm transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
+                </svg>
+                Hapus
+              </button>
+            </div>
             <div class="absolute -bottom-12 -right-12 w-40 h-40 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-500/20 transition-all duration-700 pointer-events-none"></div>
             <div class="absolute top-10 -left-12 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none"></div>
           </div>
@@ -137,6 +154,221 @@ function showToast(message, type = "success") {
     setTimeout(() => hideToast(toast), 3500);
   } catch (err) {
     console.error("showToast error:", err);
+  }
+}
+
+// Custom themed confirm modal for deletions
+function showConfirmDelete(message) {
+  return new Promise((resolve) => {
+    try {
+      const overlay = document.createElement("div");
+      overlay.style.position = "fixed";
+      overlay.style.inset = "0";
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "center";
+      overlay.style.justifyContent = "center";
+      overlay.style.minHeight = "100vh";
+      overlay.style.padding = "1rem";
+      overlay.style.boxSizing = "border-box";
+      overlay.style.background = "rgba(2,6,23,0.78)";
+      overlay.style.zIndex = "9999";
+      overlay.setAttribute("role", "dialog");
+
+      overlay.innerHTML = `
+        <div class="max-w-md w-full p-6 rounded-2xl bg-slate-900/95 border border-slate-700/50 shadow-lg">
+          <div class="flex items-start gap-4">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500/10 text-red-400 shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M6 19h12"></path>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-white">Konfirmasi Hapus</h3>
+              <p class="text-slate-300 text-sm mt-1">${message}</p>
+            </div>
+          </div>
+          <div class="mt-6 flex justify-end gap-3">
+            <button class="btn-cancel bg-slate-800/50 text-slate-200 px-4 py-2 rounded-xl border border-slate-700/40">Batal</button>
+            <button class="btn-confirm bg-gradient-to-r from-red-500 to-rose-500 text-white px-4 py-2 rounded-xl">Hapus</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      const btnCancel = overlay.querySelector(".btn-cancel");
+      const btnConfirm = overlay.querySelector(".btn-confirm");
+
+      function cleanup(result) {
+        if (overlay && overlay.parentNode)
+          overlay.parentNode.removeChild(overlay);
+        document.removeEventListener("keydown", onKeyDown);
+        resolve(result);
+      }
+
+      function onKeyDown(e) {
+        if (e.key === "Escape") cleanup(false);
+      }
+
+      btnCancel.addEventListener("click", () => cleanup(false));
+      btnConfirm.addEventListener("click", () => cleanup(true));
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) cleanup(false);
+      });
+      document.addEventListener("keydown", onKeyDown);
+      // focus the cancel button to avoid accidental deletion via Enter
+      btnCancel.focus();
+    } catch (err) {
+      console.error("showConfirmDelete error:", err);
+      resolve(false);
+    }
+  });
+}
+
+// Hapus barang: konfirmasi, coba panggil endpoint server, lalu refresh list
+async function hapusBarang(id) {
+  try {
+    const confirmed = await showConfirmDelete(
+      "Yakin ingin menghapus data ini?",
+    );
+    if (!confirmed) return;
+
+    showToast("Menghapus...", "info");
+
+    // Coba panggil endpoint server (jika tersedia). Jika tidak ada,
+    // catch akan menampilkan error.
+    const response = await fetch("../api_toko/hapus-barang.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+
+    const hasil = await response
+      .json()
+      .catch(() => ({ status: "error", message: "Response bukan JSON" }));
+
+    if (hasil && hasil.status === "success") {
+      showToast("Data berhasil dihapus.", "success");
+      ambilDataBarang();
+    } else {
+      showToast(
+        hasil && (hasil.message || hasil.pesan)
+          ? `Gagal: ${hasil.message || hasil.pesan}`
+          : "Gagal menghapus data dari server.",
+        "error",
+      );
+    }
+  } catch (err) {
+    console.error("hapusBarang error:", err);
+    showToast("Gagal menghapus data. Periksa koneksi.", "error");
+  }
+}
+
+// Edit barang: prompt user untuk nama & harga, lalu kirim ke API update
+async function editBarang(id) {
+  try {
+    const item = barangData.find((b) => String(b.id) === String(id));
+    if (!item) {
+      showToast("Data tidak ditemukan.", "error");
+      return;
+    }
+    // Tampilkan modal edit bertema (menggantikan prompt native)
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.padding = "1rem";
+    overlay.style.boxSizing = "border-box";
+    overlay.style.background = "rgba(2,6,23,0.78)";
+    overlay.style.zIndex = "9999";
+    overlay.setAttribute("role", "dialog");
+
+    overlay.innerHTML = `
+      <div class="max-w-md w-full p-6 rounded-2xl bg-slate-900/95 border border-slate-700/50 shadow-lg">
+        <h3 class="text-lg font-bold text-white mb-2">Edit Barang</h3>
+        <div class="grid gap-3">
+          <label class="text-sm text-slate-300">Nama Barang</label>
+          <input id="__edit_nama" class="w-full bg-slate-900/50 border border-slate-600/50 text-slate-200 p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+          <label class="text-sm text-slate-300">Harga</label>
+          <input id="__edit_harga" type="text" inputmode="numeric" pattern="[0-9,\.]*" class="w-full bg-slate-900/50 border border-slate-600/50 text-slate-200 p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+          <button class="btn-cancel bg-slate-800/50 text-slate-200 px-4 py-2 rounded-xl border border-slate-700/40">Batal</button>
+          <button class="btn-save bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-xl">Simpan</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const inputNama = overlay.querySelector("#__edit_nama");
+    const inputHarga = overlay.querySelector("#__edit_harga");
+    const btnCancel = overlay.querySelector(".btn-cancel");
+    const btnSave = overlay.querySelector(".btn-save");
+
+    // Isi nilai awal dari item
+    inputNama.value = item.nama_barang || "";
+    inputHarga.value = item.harga || "";
+
+    function cleanup() {
+      if (overlay && overlay.parentNode)
+        overlay.parentNode.removeChild(overlay);
+      document.removeEventListener("keydown", onKeyDown);
+    }
+
+    function onKeyDown(e) {
+      if (e.key === "Escape") cleanup();
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveHandler();
+      }
+    }
+
+    async function saveHandler() {
+      const namaBaru = inputNama.value;
+      const hargaBaru = inputHarga.value;
+      cleanup();
+      showToast("Menyimpan perubahan...", "info");
+      try {
+        const response = await fetch("../api_toko/update-barang.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, nama_barang: namaBaru, harga: hargaBaru }),
+        });
+
+        const hasil = await response
+          .json()
+          .catch(() => ({ status: "error", message: "Response bukan JSON" }));
+
+        if (hasil && hasil.status === "success") {
+          showToast("Data berhasil diperbarui.", "success");
+          ambilDataBarang();
+        } else {
+          showToast(
+            hasil && (hasil.message || hasil.pesan)
+              ? `Gagal: ${hasil.message || hasil.pesan}`
+              : "Gagal memperbarui data.",
+            "error",
+          );
+        }
+      } catch (err) {
+        console.error("editBarang error:", err);
+        showToast("Gagal memperbarui data. Periksa koneksi.", "error");
+      }
+    }
+
+    btnCancel.addEventListener("click", () => cleanup());
+    btnSave.addEventListener("click", () => saveHandler());
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) cleanup();
+    });
+    document.addEventListener("keydown", onKeyDown);
+    inputNama.focus();
+  } catch (err) {
+    console.error("editBarang error:", err);
+    showToast("Gagal memperbarui data. Periksa koneksi.", "error");
   }
 }
 
