@@ -157,6 +157,30 @@ function showToast(message, type = "success") {
   }
 }
 
+// Jika server merespon bahwa token tidak valid, keluarkan user
+function handleAuthError(resp) {
+  try {
+    if (!resp) return false;
+    const pesan = (resp.pesan || resp.message || "").toString().toLowerCase();
+    if (resp.status === "error" && pesan.includes("token")) {
+      try {
+        showToast("Sesi Anda tidak valid. Silakan login ulang.", "error");
+      } catch (err) {
+        console.error("showToast not available:", err);
+      }
+      // Hapus token lalu redirect singkat agar pengguna melihat notifikasi
+      localStorage.removeItem("token_toko");
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 900);
+      return true;
+    }
+  } catch (err) {
+    console.error("handleAuthError error:", err);
+  }
+  return false;
+}
+
 // Custom themed confirm modal for deletions
 function showConfirmDelete(message) {
   return new Promise((resolve) => {
@@ -239,13 +263,17 @@ async function hapusBarang(id) {
     // catch akan menampilkan error.
     const response = await fetch("../api_toko/hapus-barang.php", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: localStorage.getItem("token_toko") || "",
+      },
       body: JSON.stringify({ id }),
     });
 
     const hasil = await response
       .json()
       .catch(() => ({ status: "error", message: "Response bukan JSON" }));
+    if (handleAuthError(hasil)) return;
 
     if (hasil && hasil.status === "success") {
       showToast("Data berhasil dihapus.", "success");
@@ -334,13 +362,17 @@ async function editBarang(id) {
       try {
         const response = await fetch("../api_toko/update-barang.php", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: localStorage.getItem("token_toko") || "",
+          },
           body: JSON.stringify({ id, nama_barang: namaBaru, harga: hargaBaru }),
         });
 
         const hasil = await response
           .json()
           .catch(() => ({ status: "error", message: "Response bukan JSON" }));
+        if (handleAuthError(hasil)) return;
 
         if (hasil && hasil.status === "success") {
           showToast("Data berhasil diperbarui.", "success");
@@ -410,11 +442,15 @@ formTambah.addEventListener("submit", async function (event) {
   try {
     const response = await fetch("../api_toko/tambah-barang.php", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: localStorage.getItem("token_toko") || "",
+      },
       body: JSON.stringify(dataKirim), // Object JS diubah jadi String JSON
     });
 
     const hasil = await response.json();
+    if (handleAuthError(hasil)) return;
 
     if (hasil.status === "success") {
       showToast("Data Berhasil ditambah!", "success");
@@ -447,4 +483,33 @@ if (inputSearch) {
       renderBarang(filtered);
     }, 180);
   });
+}
+
+const myToken = localStorage.getItem('token_toko');
+
+if (!myToken) {
+  try {
+    showToast("Anda harus login terlebih dahulu!", "error");
+  } catch (err) {
+    console.error(err);
+  }
+  setTimeout(() => {
+    window.location.href = "login.html";
+  }, 700);
+}
+
+// 2. CONTOH MODIFIKASI FETCH TAMBAH/EDIT DATA (Sematkan Header Authorization)
+// Berlaku juga untuk fetch Hapus Barang!
+// Contoh pola (dinonaktifkan). Jika ingin mengirim token `Authorization`,
+// sesuaikan handler submit di atas dan tambahkan header:
+// {
+//   "Content-Type": "application/json",
+//   "Authorization": myToken
+// }
+// (Kode contoh dihapus untuk menghindari kesalahan sintaks.)
+
+// FUNGSI LOGOUT (Tambahkan tombol "Logout" di index.html yang memanggil fungsi ini)
+function logout() {
+  localStorage.removeItem("token_toko");
+  window.location.href = "login.html";
 }
