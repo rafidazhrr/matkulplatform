@@ -1,9 +1,8 @@
-const CACHE_NAME = "toko-pwa-v1";
+const CACHE_NAME = "toko-pwa-v5";
 const urlsToCache = [
   "./",
   "index.html",
   "app.js",
-  "manifest.json",
   "icons/image.png",
 ];
 
@@ -46,11 +45,23 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const requestUrl = new URL(event.request.url);
   const isSameOrigin = requestUrl.origin === self.location.origin;
+
+  // Abaikan manifest.json agar langsung dilayani oleh browser (memakai cookie keamanan __test)
+  if (requestUrl.pathname.endsWith("manifest.json")) {
+    return;
+  }
+
   const isApiRequest =
     requestUrl.pathname.includes("/api_toko/") ||
     requestUrl.pathname.endsWith(".php");
 
   if (isApiRequest) {
+    // POST/PUT/DELETE tidak bisa di-cache, langsung teruskan ke network
+    if (event.request.method !== 'GET') {
+      event.respondWith(fetch(event.request));
+      return;
+    }
+    // GET: network-first, simpan ke cache sebagai fallback offline
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {

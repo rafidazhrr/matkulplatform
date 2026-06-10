@@ -4,9 +4,10 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
 // Deklarasi parameter koneksi
+// == KONFIGURASI LOCALHOST (XAMPP) ==
 $host = "localhost";
 $user = "root";
-$pass = ""; // Kosongkan jika XAMPP bawaan
+$pass = "";
 $db = "db_toko";
 
 // Membuka jembatan koneksi

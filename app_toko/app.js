@@ -1,9 +1,11 @@
 // 1. Buat fungsi Async (Karena mengambil data butuh waktu menunggu)
 let barangData = [];
+let editingId = null;
+let lastPreviewUrl = null;
 async function ambilDataBarang() {
   try {
     // 2. Panggil Pelayan (Fetch) menuju URL API
-    const response = await fetch("../api_toko/get-barang.php");
+    const response = await fetch("../api_toko/get-barang.php", { credentials: 'include' });
 
     // 3. Bongkar paket (Ubah string JSON jadi Object JS)
     const hasil = await response.json();
@@ -61,10 +63,14 @@ function renderBarang(items) {
       hargaFormatted = parseFloat(barang.harga).toLocaleString("id-ID");
     }
     const animDelay = index * 100;
+    const imgSrc = barang.gambar && barang.gambar !== "" ? `../api_toko/uploads/${barang.gambar}` : "icons/image.png";
     barisHTML += `
           <div class="group relative bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-6 transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_15px_40px_-10px_rgba(16,185,129,0.3)] hover:border-emerald-500/30 overflow-hidden cursor-pointer flex flex-col justify-between min-h-[160px] animate-[fadeInUp_0.6s_ease-out_forwards]" style="opacity: 0; animation-delay: ${animDelay}ms;">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div class="relative z-10 flex items-center justify-center">
+            <div class="relative z-10 flex items-center justify-center flex-col">
+              <div class="w-full flex items-center justify-center mb-3">
+                <img src="${imgSrc}" alt="${barang.nama_barang}" class="w-full max-w-[240px] h-36 object-cover rounded-xl" onerror="this.src='icons/image.png'" />
+              </div>
               <h3 class="text-xl md:text-2xl text-center font-bold text-white font-display leading-tight tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-300 transition-all duration-300 line-clamp-2">
                 ${barang.nama_barang}
               </h3>
@@ -263,6 +269,7 @@ async function hapusBarang(id) {
     // catch akan menampilkan error.
     const response = await fetch("../api_toko/hapus-barang.php", {
       method: "POST",
+      credentials: 'include',
       headers: {
         "Content-Type": "application/json",
         Authorization: localStorage.getItem("token_toko") || "",
@@ -300,107 +307,44 @@ async function editBarang(id) {
       showToast("Data tidak ditemukan.", "error");
       return;
     }
-    // Tampilkan modal edit bertema (menggantikan prompt native)
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.padding = "1rem";
-    overlay.style.boxSizing = "border-box";
-    overlay.style.background = "rgba(2,6,23,0.78)";
-    overlay.style.zIndex = "9999";
-    overlay.setAttribute("role", "dialog");
 
-    overlay.innerHTML = `
-      <div class="max-w-md w-full p-6 rounded-2xl bg-slate-900/95 border border-slate-700/50 shadow-lg">
-        <h3 class="text-lg font-bold text-white mb-2">Edit Barang</h3>
-        <div class="grid gap-3">
-          <label class="text-sm text-slate-300">Nama Barang</label>
-          <input id="__edit_nama" class="w-full bg-slate-900/50 border border-slate-600/50 text-slate-200 p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
-          <label class="text-sm text-slate-300">Harga</label>
-          <input id="__edit_harga" type="text" inputmode="numeric" pattern="[0-9,\.]*" class="w-full bg-slate-900/50 border border-slate-600/50 text-slate-200 p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
-        </div>
-        <div class="mt-6 flex justify-end gap-3">
-          <button class="btn-cancel bg-slate-800/50 text-slate-200 px-4 py-2 rounded-xl border border-slate-700/40">Batal</button>
-          <button class="btn-save bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-xl">Simpan</button>
-        </div>
-      </div>
-    `;
+    // Masuk ke mode edit: isi form utama
+    editingId = String(id);
+    const inputId = document.getElementById("input-id");
+    const inputNama = document.getElementById("input-nama");
+    const inputHarga = document.getElementById("input-harga");
+    const fileInput = document.getElementById("input-gambar");
+    const previewWrapper = document.getElementById("preview-wrapper");
+    const previewImg = document.getElementById("preview-gambar");
+    const btnSubmit = document.getElementById("btn-submit");
+    const btnCancel = document.getElementById("btn-cancel-edit");
 
-    document.body.appendChild(overlay);
-
-    const inputNama = overlay.querySelector("#__edit_nama");
-    const inputHarga = overlay.querySelector("#__edit_harga");
-    const btnCancel = overlay.querySelector(".btn-cancel");
-    const btnSave = overlay.querySelector(".btn-save");
-
-    // Isi nilai awal dari item
+    inputId.value = editingId;
     inputNama.value = item.nama_barang || "";
     inputHarga.value = item.harga || "";
+    // reset file input value
+    try { fileInput.value = null; } catch (e) { /* ignore */ }
 
-    function cleanup() {
-      if (overlay && overlay.parentNode)
-        overlay.parentNode.removeChild(overlay);
-      document.removeEventListener("keydown", onKeyDown);
+    // Tampilkan preview jika ada gambar
+    if (item.gambar && item.gambar !== "") {
+      previewImg.src = `../api_toko/uploads/${item.gambar}`;
+      previewWrapper.classList.remove("hidden");
+    } else {
+      previewImg.src = 'icons/image.png';
+      previewWrapper.classList.remove("hidden");
     }
 
-    function onKeyDown(e) {
-      if (e.key === "Escape") cleanup();
-      if (e.key === "Enter") {
-        e.preventDefault();
-        saveHandler();
-      }
-    }
+    // Ubah label tombol dan tampilkan tombol batal
+    if (btnSubmit) btnSubmit.textContent = "Perbarui";
+    if (btnCancel) btnCancel.classList.remove("hidden");
 
-    async function saveHandler() {
-      const namaBaru = inputNama.value;
-      const hargaBaru = inputHarga.value;
-      cleanup();
-      showToast("Menyimpan perubahan...", "info");
-      try {
-        const response = await fetch("../api_toko/update-barang.php", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: localStorage.getItem("token_toko") || "",
-          },
-          body: JSON.stringify({ id, nama_barang: namaBaru, harga: hargaBaru }),
-        });
-
-        const hasil = await response
-          .json()
-          .catch(() => ({ status: "error", message: "Response bukan JSON" }));
-        if (handleAuthError(hasil)) return;
-
-        if (hasil && hasil.status === "success") {
-          showToast("Data berhasil diperbarui.", "success");
-          ambilDataBarang();
-        } else {
-          showToast(
-            hasil && (hasil.message || hasil.pesan)
-              ? `Gagal: ${hasil.message || hasil.pesan}`
-              : "Gagal memperbarui data.",
-            "error",
-          );
-        }
-      } catch (err) {
-        console.error("editBarang error:", err);
-        showToast("Gagal memperbarui data. Periksa koneksi.", "error");
-      }
-    }
-
-    btnCancel.addEventListener("click", () => cleanup());
-    btnSave.addEventListener("click", () => saveHandler());
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) cleanup();
-    });
-    document.addEventListener("keydown", onKeyDown);
+    // fokus ke nama
     inputNama.focus();
+    // scroll ke form
+    inputNama.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (err) {
     console.error("editBarang error:", err);
-    showToast("Gagal memperbarui data. Periksa koneksi.", "error");
+    showToast("Gagal mengisi form edit.", "error");
   }
 }
 
@@ -432,35 +376,138 @@ formTambah.addEventListener("submit", async function (event) {
   const namaVal = document.getElementById("input-nama").value;
   const hargaVal = document.getElementById("input-harga").value;
 
-  // 2. Buat kardus data (Object JS)
-  const dataKirim = {
-    nama_barang: namaVal,
-    harga: hargaVal,
-  };
+  // 2. Buat FormData agar bisa mengirim file
+  const fileInput = document.getElementById("input-gambar");
+  const fd = new FormData();
+  fd.append("nama_barang", namaVal);
+  fd.append("harga", hargaVal);
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    fd.append("gambar", fileInput.files[0]);
+  }
 
-  // 3. Panggil kurir Fetch (dengan atribut tambahan)
+  // Jika sedang dalam mode edit, sertakan id dan ubah endpoint
+  let endpoint = "../api_toko/tambah-barang.php";
+  if (editingId) {
+    fd.append("id", editingId);
+    endpoint = "../api_toko/update-barang.php";
+  }
+
+  // 3. Kirim FormData via Fetch (jangan set Content-Type manual)
   try {
-    const response = await fetch("../api_toko/tambah-barang.php", {
+    const response = await fetch(endpoint, {
       method: "POST",
+      credentials: 'include',
       headers: {
-        "Content-Type": "application/json",
         Authorization: localStorage.getItem("token_toko") || "",
       },
-      body: JSON.stringify(dataKirim), // Object JS diubah jadi String JSON
+      body: fd,
     });
 
     const hasil = await response.json();
     if (handleAuthError(hasil)) return;
 
-    if (hasil.status === "success") {
-      showToast("Data Berhasil ditambah!", "success");
+    if (hasil && hasil.status === "success") {
+      if (editingId) {
+        showToast("Data berhasil diperbarui!", "success");
+        // keluar dari mode edit
+        editingId = null;
+        const inputId = document.getElementById("input-id");
+        if (inputId) inputId.value = "";
+        const btnSubmit = document.getElementById("btn-submit");
+        if (btnSubmit) btnSubmit.textContent = "Simpan";
+        const btnCancel = document.getElementById("btn-cancel-edit");
+        if (btnCancel) btnCancel.classList.add("hidden");
+      } else {
+        showToast("Data Berhasil ditambah!", "success");
+      }
+      // revoke any preview URL (add or edit)
+      if (lastPreviewUrl) {
+        try { URL.revokeObjectURL(lastPreviewUrl); } catch (e) {}
+        lastPreviewUrl = null;
+      }
+
+      // Clear file input and reset preview UI
+      const fileInputClear = document.getElementById("input-gambar");
+      const previewWrapperClear = document.getElementById("preview-wrapper");
+      const previewImgClear = document.getElementById("preview-gambar");
+      try { if (fileInputClear) fileInputClear.value = null; } catch (e) {}
+      if (previewWrapperClear) previewWrapperClear.classList.add("hidden");
+      if (previewImgClear) previewImgClear.src = 'icons/image.png';
+
       formTambah.reset(); // Kosongkan form
-      ambilDataBarang(); // Panggil fungsi tabel (GET) agar data terbaru langsung muncul!
+      ambilDataBarang(); // Refresh daftar
+    } else {
+      showToast(
+        hasil && (hasil.message || hasil.pesan)
+          ? `Gagal: ${hasil.message || hasil.pesan}`
+          : editingId
+          ? "Gagal memperbarui data."
+          : "Gagal menambahkan data.",
+        "error",
+      );
     }
   } catch (error) {
     console.error("Gagal POST:", error);
+    showToast("Gagal mengirim data. Periksa koneksi.", "error");
   }
 });
+
+// Tombol batal edit: batalkan mode edit dan reset form
+const btnCancelEdit = document.getElementById("btn-cancel-edit");
+if (btnCancelEdit) {
+  btnCancelEdit.addEventListener("click", () => {
+    editingId = null;
+    const inputId = document.getElementById("input-id");
+    if (inputId) inputId.value = "";
+    formTambah.reset();
+    const btnSubmit = document.getElementById("btn-submit");
+    if (btnSubmit) btnSubmit.textContent = "Simpan";
+    const previewWrapper = document.getElementById("preview-wrapper");
+    const previewImg = document.getElementById("preview-gambar");
+    if (previewWrapper) previewWrapper.classList.add("hidden");
+    if (previewImg) previewImg.src = 'icons/image.png';
+    // revoke any created object URL
+    if (lastPreviewUrl) {
+      try { URL.revokeObjectURL(lastPreviewUrl); } catch (e) {}
+      lastPreviewUrl = null;
+    }
+    // hide the cancel button itself
+    btnCancelEdit.classList.add("hidden");
+    // focus name input for convenience
+    const inputNama = document.getElementById("input-nama");
+    if (inputNama) inputNama.focus();
+  });
+}
+
+// Preview ketika memilih file baru
+const fileInputEl = document.getElementById("input-gambar");
+if (fileInputEl) {
+  fileInputEl.addEventListener("change", (e) => {
+    const previewWrapper = document.getElementById("preview-wrapper");
+    const previewImg = document.getElementById("preview-gambar");
+    if (e.target.files && e.target.files[0]) {
+      try {
+        // revoke previous URL
+        if (lastPreviewUrl) {
+          try { URL.revokeObjectURL(lastPreviewUrl); } catch (er) {}
+          lastPreviewUrl = null;
+        }
+        lastPreviewUrl = URL.createObjectURL(e.target.files[0]);
+        previewImg.src = lastPreviewUrl;
+        if (previewWrapper) previewWrapper.classList.remove("hidden");
+      } catch (err) {
+        console.error("preview error:", err);
+      }
+    } else {
+      if (previewWrapper) previewWrapper.classList.add("hidden");
+      if (previewImg) previewImg.src = 'icons/image.png';
+      if (lastPreviewUrl) {
+        try { URL.revokeObjectURL(lastPreviewUrl); } catch (er) {}
+        lastPreviewUrl = null;
+      }
+    }
+  });
+}
 
 // Search: filter items client-side (debounced)
 const inputSearch = document.getElementById("input-search");

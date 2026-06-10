@@ -1,0 +1,14 @@
+# Mengizinkan header Authorization diteruskan ke PHP di server CGI/FastCGI (seperti InfinityFree)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP:Authorization} ^(.*)
+    RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+</IfModule>
+
+# Untuk Apache 2.4.13 ke atas
+<IfModule mod_cgi.c>
+    CGIPassAuth On
+</IfModule>
+<IfModule mod_cgid.c>
+    CGIPassAuth On
+</IfModule>

@@ -12,7 +12,49 @@
       rel="stylesheet"
     />
 
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" id="pwa-manifest" />
+    <script>
+      (function () {
+        const currentOrigin = window.location.origin;
+        const currentPath = window.location.pathname;
+        const basePath = currentPath.substring(
+          0,
+          currentPath.lastIndexOf("/") + 1,
+        );
+        const absoluteBasePath = currentOrigin + basePath;
+
+        const manifest = {
+          name: "Aplikasi Toko Keren",
+          short_name: "AppToko",
+          description: "Aplikasi pencatat barang PWA",
+          scope: absoluteBasePath,
+          start_url: absoluteBasePath + "index.html",
+          display: "standalone",
+          background_color: "#ffffff",
+          theme_color: "#8b5cf6",
+          icons: [
+            {
+              src: absoluteBasePath + "icons/image.png",
+              sizes: "192x192",
+              type: "image/png",
+            },
+            {
+              src: absoluteBasePath + "icons/image2.png",
+              sizes: "512x512",
+              type: "image/png",
+            },
+          ],
+        };
+
+        const manifestStr = JSON.stringify(manifest);
+        const manifestDataUri =
+          "data:application/manifest+json;base64," +
+          btoa(unescape(encodeURIComponent(manifestStr)));
+        document
+          .getElementById("pwa-manifest")
+          .setAttribute("href", manifestDataUri);
+      })();
+    </script>
     <meta name="theme-color" content="#8b5cf6" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -311,6 +353,7 @@
           try {
             const res = await fetch("../api_toko/login.php", {
               method: "POST",
+              credentials: "include",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ username: usr, password: pwd }),
             });
