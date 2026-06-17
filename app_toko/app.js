@@ -2,6 +2,11 @@
 let barangData = [];
 let editingId = null;
 let lastPreviewUrl = null;
+// Pagination state
+let currentPage = 1;
+const pageSize = 4;
+let currentViewData = [];
+let totalPages = 1;
 async function ambilDataBarang() {
   try {
     // 2. Panggil Pelayan (Fetch) menuju URL API
@@ -12,7 +17,11 @@ async function ambilDataBarang() {
     if (hasil.status === "success") {
       // simpan dataset global agar mudah di-filter (search)
       barangData = hasil.data;
-      renderBarang(barangData);
+      // inisialisasi view dan pagination
+      currentViewData = barangData;
+      currentPage = 1;
+      totalPages = Math.max(1, Math.ceil(currentViewData.length / pageSize));
+      renderPage(currentPage);
     } else {
       // Jika status tidak success, tampilkan pesan elegan
       document.getElementById("tabel-barang").innerHTML = `
@@ -23,6 +32,8 @@ async function ambilDataBarang() {
                     <h3 class="text-xl text-slate-300 font-medium">Data barang kosong atau tidak ditemukan.</h3>
                 </div>
             `;
+          // sembunyikan kontrol pagination jika ada
+          try { const p = document.getElementById('pagination-controls'); if (p) p.style.display = 'none'; } catch (e) {}
     }
   } catch (error) {
     console.error("Gagal mengambil data:", error);
@@ -35,6 +46,7 @@ async function ambilDataBarang() {
                 <p class="text-red-400/70 text-base">Pastikan Web Server dan Database Anda menyala.</p>
             </div>
         `;
+          try { const p = document.getElementById('pagination-controls'); if (p) p.style.display = 'none'; } catch (e) {}
   }
 }
 
@@ -105,6 +117,54 @@ function renderBarang(items) {
   });
 
   container.innerHTML = barisHTML;
+}
+
+// Render a specific page from `currentViewData`
+function renderPage(page) {
+  if (!Array.isArray(currentViewData)) currentViewData = [];
+  totalPages = Math.max(1, Math.ceil(currentViewData.length / pageSize));
+  if (page < 1) page = 1;
+  if (page > totalPages) page = totalPages;
+  currentPage = page;
+
+  const start = (page - 1) * pageSize;
+  const pageItems = currentViewData.slice(start, start + pageSize);
+  renderBarang(pageItems);
+  updatePaginationControls(currentViewData.length);
+}
+
+function updatePaginationControls(totalItems) {
+  const container = document.getElementById('pagination-controls');
+  if (!container) return;
+  const prevBtn = document.getElementById('prev-page');
+  const nextBtn = document.getElementById('next-page');
+  const infoEl = document.getElementById('pagination-info');
+
+  totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  // Toggle visibility
+  if (totalItems <= pageSize) {
+    container.style.display = 'none';
+    return;
+  } else {
+    container.style.display = 'flex';
+  }
+
+  if (infoEl) infoEl.textContent = `Halaman ${currentPage} dari ${totalPages} — Menampilkan ${Math.min((currentPage-1)*pageSize+1, totalItems)}-${Math.min(currentPage*pageSize, totalItems)} dari ${totalItems}`;
+
+  if (prevBtn) {
+    prevBtn.disabled = currentPage <= 1;
+    prevBtn.onclick = () => {
+      if (currentPage > 1) renderPage(currentPage - 1);
+    };
+  }
+  if (nextBtn) {
+    nextBtn.disabled = currentPage >= totalPages;
+    nextBtn.onclick = () => {
+      if (currentPage < totalPages) renderPage(currentPage + 1);
+    };
+  }
 }
 
 // Fungsi toast kecil untuk menampilkan notifikasi yang sesuai tema (emerald->cyan)
@@ -518,7 +578,10 @@ if (inputSearch) {
     searchTimeout = setTimeout(() => {
       const q = e.target.value.trim().toLowerCase();
       if (!q) {
-        renderBarang(barangData);
+        currentViewData = barangData;
+        currentPage = 1;
+        totalPages = Math.max(1, Math.ceil(currentViewData.length / pageSize));
+        renderPage(1);
         return;
       }
       const filtered = barangData.filter((b) => {
@@ -527,7 +590,10 @@ if (inputSearch) {
         const id = String(b.id || "").toLowerCase();
         return nama.includes(q) || harga.includes(q) || id.includes(q);
       });
-      renderBarang(filtered);
+      currentViewData = filtered;
+      currentPage = 1;
+      totalPages = Math.max(1, Math.ceil(currentViewData.length / pageSize));
+      renderPage(1);
     }, 180);
   });
 }

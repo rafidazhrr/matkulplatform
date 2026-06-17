@@ -429,6 +429,60 @@
           </p>
         </div>
       </div>
+      <!-- Pagination Controls -->
+      <div
+        id="pagination-controls"
+        class="mt-8 flex items-center justify-center gap-3"
+        style="display: none"
+      >
+        <button
+          id="prev-page"
+          aria-label="Sebelumnya"
+          title="Sebelumnya"
+          class="px-4 py-2 rounded-lg bg-slate-800/40 border border-slate-700/50 text-slate-200 hover:bg-slate-700/60 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5 inline-block"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          <span class="sr-only">Sebelumnya</span>
+        </button>
+        <div id="pagination-info" class="text-sm text-slate-400">
+          Halaman 1 dari 1
+        </div>
+        <button
+          id="next-page"
+          aria-label="Selanjutnya"
+          title="Selanjutnya"
+          class="px-4 py-2 rounded-lg bg-slate-800/40 border border-slate-700/50 text-slate-200 hover:bg-slate-700/60 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5 inline-block"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+          <span class="sr-only">Selanjutnya</span>
+        </button>
+      </div>
     </main>
 
     <!-- Footer -->
