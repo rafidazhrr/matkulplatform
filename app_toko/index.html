@@ -15,6 +15,9 @@
     />
 
     <link rel="manifest" id="pwa-manifest" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
       (function () {
         const currentOrigin = window.location.origin;
@@ -397,6 +400,35 @@
             placeholder="Masukkan nama barang yang akan dicari"
             class="flex-1 bg-slate-900/50 border border-slate-600/50 text-slate-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
           />
+        </div>
+      </div>
+
+      <div
+        class="bg-slate-800/40 p-6 rounded-xl shadow-sm border border-slate-700/40 mb-8 w-full"
+      >
+        <h2
+          class="text-xl font-bold text-white mb-4 flex items-center gap-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="text-orange-500"
+          >
+            <path d="M18 20V10" />
+            <path d="M12 20V4" />
+            <path d="M6 20v-6" />
+          </svg>
+          Top 5 Barang Termahal
+        </h2>
+
+        <!-- Kunci Container: relative h-72 (tinggi ~288px) -->
+        <div class="relative h-72 w-full">
+          <canvas id="myChart"></canvas>
         </div>
       </div>
 

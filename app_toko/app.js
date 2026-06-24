@@ -7,21 +7,49 @@ let currentPage = 1;
 const pageSize = 4;
 let currentViewData = [];
 let totalPages = 1;
-async function ambilDataBarang() {
+
+// Real-time / polling helpers
+let lastDataSignature = "";
+let pollTimer = null;
+const POLL_INTERVAL_MS = 4000;
+let isFetching = false;
+let myChartInstance = null;
+
+async function ambilDataBarang(force = false) {
+  if (!force && isFetching) return;
+  isFetching = true;
   try {
     // 2. Panggil Pelayan (Fetch) menuju URL API
     const response = await fetch("../api_toko/get-barang.php", { credentials: 'include' });
 
     // 3. Bongkar paket (Ubah string JSON jadi Object JS)
     const hasil = await response.json();
+    if (handleAuthError(hasil)) { isFetching = false; return; }
+
     if (hasil.status === "success") {
+      const newData = hasil.data || [];
+      // buat signature sederhana untuk deteksi perubahan
+      const signature = newData
+        .map((d) => `${d.id}:${d.nama_barang}:${d.harga}:${d.gambar || ""}`)
+        .join("|");
+
+      if (!force && signature === lastDataSignature) {
+        // tidak ada perubahan, hanya perbarui kontrol pagination agar tetap sinkron
+        currentViewData = barangData;
+        updatePaginationControls(currentViewData.length);
+        isFetching = false;
+        return;
+      }
+
+      lastDataSignature = signature;
       // simpan dataset global agar mudah di-filter (search)
-      barangData = hasil.data;
+      barangData = newData;
       // inisialisasi view dan pagination
       currentViewData = barangData;
       currentPage = 1;
       totalPages = Math.max(1, Math.ceil(currentViewData.length / pageSize));
       renderPage(currentPage);
+      await updateChart();
     } else {
       // Jika status tidak success, tampilkan pesan elegan
       document.getElementById("tabel-barang").innerHTML = `
@@ -32,8 +60,11 @@ async function ambilDataBarang() {
                     <h3 class="text-xl text-slate-300 font-medium">Data barang kosong atau tidak ditemukan.</h3>
                 </div>
             `;
-          // sembunyikan kontrol pagination jika ada
-          try { const p = document.getElementById('pagination-controls'); if (p) p.style.display = 'none'; } catch (e) {}
+      // sembunyikan kontrol pagination jika ada
+      try {
+        const p = document.getElementById("pagination-controls");
+        if (p) p.style.display = "none";
+      } catch (e) {}
     }
   } catch (error) {
     console.error("Gagal mengambil data:", error);
@@ -46,12 +77,16 @@ async function ambilDataBarang() {
                 <p class="text-red-400/70 text-base">Pastikan Web Server dan Database Anda menyala.</p>
             </div>
         `;
-          try { const p = document.getElementById('pagination-controls'); if (p) p.style.display = 'none'; } catch (e) {}
+    try {
+      const p = document.getElementById("pagination-controls");
+      if (p) p.style.display = "none";
+    } catch (e) {}
+  } finally {
+    isFetching = false;
   }
 }
 
-// 6. Jalankan fungsi saat file JS ini di-load
-ambilDataBarang();
+// 6. Jalankan fungsi saat file JS ini di-load (dipicu pada window 'load' untuk menjaga urutan)
 
 // Render function: bangun grid dari array items
 function renderBarang(items) {
@@ -166,6 +201,140 @@ function updatePaginationControls(totalItems) {
     };
   }
 }
+
+// ------------------ Chart.js helpers ------------------
+function prepareChartData() {
+  try {
+    // ambil top 5 berdasarkan harga (descending)
+    const sorted = (barangData || []).slice().sort((a, b) => {
+      const ha = parseFloat(a.harga) || 0;
+      const hb = parseFloat(b.harga) || 0;
+      return hb - ha;
+    });
+    const top5 = sorted.slice(0, 5);
+    const labels = top5.map((b) => b.nama_barang);
+    const data = top5.map((b) => Number(b.harga) || 0);
+    return { labels, data };
+  } catch (err) {
+    console.error("prepareChartData error:", err);
+    return { labels: [], data: [] };
+  }
+}
+
+function createOrUpdateChart() {
+  // replaced by async variant below
+}
+
+// Ambil data statistik dari endpoint khusus (fallback ke local jika gagal)
+async function fetchStatistik() {
+  try {
+    const resp = await fetch("../api_toko/statistik.php", { credentials: 'include' });
+    const json = await resp.json().catch(() => null);
+    if (!json) return null;
+    if (handleAuthError(json)) return null;
+    if (json.status && json.status === "success" && json.chart_data) {
+      return {
+        labels: Array.isArray(json.chart_data.labels) ? json.chart_data.labels : [],
+        data: Array.isArray(json.chart_data.values) ? json.chart_data.values : [],
+      };
+    }
+  } catch (err) {
+    console.error("fetchStatistik error:", err);
+  }
+  return null;
+}
+
+async function createOrUpdateChart() {
+  try {
+    const ctx = document.getElementById("myChart");
+    if (!ctx) return;
+
+    // coba ambil dari statistik.php terlebih dahulu
+    const stat = await fetchStatistik();
+    let labels = [];
+    let data = [];
+
+    if (stat && stat.labels && stat.labels.length > 0) {
+      labels = stat.labels;
+      data = stat.data || [];
+    } else {
+      const cd = prepareChartData();
+      labels = cd.labels;
+      data = cd.data;
+    }
+
+    // gunakan warna yang sesuai tema
+    const bgColors = data.map(() => "rgba(16,185,129,0.9)");
+
+    if (!myChartInstance) {
+      myChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "Harga (Rp)",
+              data: data,
+              backgroundColor: bgColors,
+              borderRadius: 8,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { mode: "index", intersect: false },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: "#94a3b8" } },
+            y: {
+              grid: { color: "rgba(148,163,184,0.08)" },
+              ticks: {
+                color: "#94a3b8",
+                callback: function (value) {
+                  return new Intl.NumberFormat("id-ID").format(value);
+                },
+              },
+            },
+          },
+        },
+      });
+    } else {
+      myChartInstance.data.labels = labels;
+      myChartInstance.data.datasets[0].data = data;
+      myChartInstance.data.datasets[0].backgroundColor = bgColors;
+      myChartInstance.update();
+    }
+  } catch (err) {
+    console.error("createOrUpdateChart error:", err);
+  }
+}
+
+async function updateChart() {
+  // small wrapper for naming clarity
+  await createOrUpdateChart();
+}
+
+// start polling loop
+function startPolling() {
+  if (pollTimer) return;
+  pollTimer = setInterval(() => ambilDataBarang(false), POLL_INTERVAL_MS);
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+// start initial polling after first load
+window.addEventListener("load", () => {
+  // ensure initial fetch forces render
+  ambilDataBarang(true).then(() => startPolling());
+});
 
 // Fungsi toast kecil untuk menampilkan notifikasi yang sesuai tema (emerald->cyan)
 function showToast(message, type = "success") {
