@@ -279,7 +279,23 @@ async function createOrUpdateChart() {
     }
 
     // gunakan warna yang sesuai tema
-    const bgColors = data.map(() => "rgba(16,185,129,0.9)");
+    const presetColors = [
+      "rgba(16, 185, 129, 0.8)", // Emerald
+      "rgba(6, 182, 212, 0.8)",  // Cyan
+      "rgba(99, 102, 241, 0.8)", // Indigo
+      "rgba(245, 158, 11, 0.8)",  // Amber
+      "rgba(244, 63, 94, 0.8)"   // Rose
+    ];
+    const presetHoverColors = [
+      "rgba(16, 185, 129, 1)",
+      "rgba(6, 182, 212, 1)",
+      "rgba(99, 102, 241, 1)",
+      "rgba(245, 158, 11, 1)",
+      "rgba(244, 63, 94, 1)"
+    ];
+
+    const bgColors = data.map((_, index) => presetColors[index % presetColors.length]);
+    const hoverBgColors = data.map((_, index) => presetHoverColors[index % presetHoverColors.length]);
 
     if (!myChartInstance) {
       myChartInstance = new Chart(ctx, {
@@ -291,6 +307,7 @@ async function createOrUpdateChart() {
               label: "Harga (Rp)",
               data: data,
               backgroundColor: bgColors,
+              hoverBackgroundColor: hoverBgColors,
               borderRadius: 8,
             },
           ],
@@ -320,6 +337,7 @@ async function createOrUpdateChart() {
       myChartInstance.data.labels = labels;
       myChartInstance.data.datasets[0].data = data;
       myChartInstance.data.datasets[0].backgroundColor = bgColors;
+      myChartInstance.data.datasets[0].hoverBackgroundColor = hoverBgColors;
       myChartInstance.update();
     }
   } catch (err) {
@@ -823,4 +841,12 @@ if (!myToken) {
 function logout() {
   localStorage.removeItem("token_toko");
   window.location.href = "login.html";
+}
+
+// Event listener untuk Tombol Buka Tab Cetak
+const btnCetak = document.getElementById("btn-cetak");
+if (btnCetak) {
+  btnCetak.addEventListener("click", () => {
+    window.open("cetak.html", "_blank");
+  });
 }

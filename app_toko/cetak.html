@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>&nbsp;</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    /* Reset & Base Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #000;
+      background-color: #f1f5f9;
+      line-height: 1.5;
+      padding: 40px 20px;
+    }
+    
+    /* Paper container (A4 mockup on screen, normal on print) */
+    .sheet {
+      background: #ffffff;
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 25mm 20mm;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Print settings */
+    @media print {
+      @page {
+        margin: 0;
+      }
+      body {
+        background: #fff;
+        padding: 15mm 15mm;
+      }
+      .sheet {
+        width: 100%;
+        min-height: 0;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* Header / Kop Surat */
+    .kop-surat {
+      text-align: center;
+      border-bottom: 3px solid #000;
+      padding-bottom: 12px;
+      margin-bottom: 25px;
+    }
+    .kop-surat h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+    .kop-surat p {
+      font-size: 11px;
+      color: #333;
+      margin-bottom: 1px;
+    }
+    .kop-surat .contact-info {
+      font-size: 11px;
+      color: #333;
+    }
+
+    /* Document Title */
+    .title-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .title-container h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+    }
+    .title-container p {
+      font-size: 13px;
+      color: #555;
+    }
+
+    /* Meta Info (Nomor Laporan & Tanggal) */
+    .doc-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+    .doc-meta span {
+      font-weight: 600;
+    }
+
+    /* Bold Border Table (Tabel Tegas) */
+    table.tabel-tegas {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      font-size: 12px;
+    }
+    table.tabel-tegas th,
+    table.tabel-tegas td {
+      border: 2px solid #000;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    table.tabel-tegas th {
+      background-color: #d1d5db !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    table.tabel-tegas td.num-col,
+    table.tabel-tegas th.num-col {
+      text-align: center;
+      width: 50px;
+    }
+    table.tabel-tegas td.price-col,
+    table.tabel-tegas th.price-col {
+      text-align: right;
+      width: 160px;
+    }
+    table.tabel-tegas tr.total-row td {
+      font-weight: 700;
+      background-color: #f3f4f6 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Signature Section (Tanda Tangan) */
+    .signature-container {
+      margin-top: auto; /* Push to bottom of sheet */
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 20px;
+    }
+    .signature-box {
+      text-align: center;
+      width: 250px;
+    }
+    .signature-box .date {
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+    .signature-box .role {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 50px; /* Space for physical signature */
+    }
+    .signature-box .name {
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: underline;
+    }
+    .signature-box .nip {
+      font-size: 11px;
+      color: #555;
+    }
+
+    /* Alerts / Status overlay on screen */
+    .status-overlay {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 14px;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .status-overlay .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading State -->
+  <div id="loading-state" class="status-overlay no-print">
+    <div class="spinner"></div>
+    <span>Menghubungkan & mengambil data laporan...</span>
+  </div>
+
+  <div class="sheet" id="report-sheet" style="display: none;">
+    <!-- Kop Surat -->
+    <div class="kop-surat">
+      <h1>APLIKASI TOKO PWA</h1>
+      <p>Jl. Ahmad Yani No.111, Pontianak, Kalimantan Barat</p>
+      <p class="contact-info">Email: 231220053@unmuhpnk.ac.id | Telp: 0812345678910</p>
+    </div>
+
+    <!-- Title -->
+    <div class="title-container">
+      <h2>Laporan Data Barang & Aset Toko</h2>
+      <p>Laporan Fisik Seluruh Persediaan Barang Di Toko</p>
+    </div>
+
+    <!-- Document Meta Info -->
+    <div class="doc-meta">
+      <div>
+        No. Dokumen: <span id="doc-id">LPT-2026/07-001</span><br>
+        Klasifikasi: <span>Laporan Stok Barang</span>
+      </div>
+      <div style="text-align: right;">
+        Tanggal Cetak: <span id="doc-date">-</span>
+      </div>
+    </div>
+
+    <!-- Bold Border Table -->
+    <table class="tabel-tegas">
+      <thead>
+        <tr>
+          <th class="num-col">No.</th>
+          <th>Nama Barang</th>
+          <th class="price-col">Harga Satuan</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <!-- Rendered by Javascript -->
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td id="total-aset-label" colspan="2" style="text-align: right; border-right: none;">TOTAL HARGA ASET :</td>
+          <td id="total-aset-cell" class="price-col" style="border-left: none;">-</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Signature -->
+    <div class="signature-container">
+      <div class="signature-box">
+        <div class="date" id="signature-date">Pontianak, -</div>
+        <div class="role">Manajer RAFMART</div>
+        <div class="name">Rafid Azmi H.</div>
+        <div class="nip">NIM 231220053</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("token_toko");
+      const loadingState = document.getElementById("loading-state");
+      const reportSheet = document.getElementById("report-sheet");
+
+      if (!token) {
+        alert("Akses Ditolak! Anda harus login terlebih dahulu.");
+        window.close();
+        return;
+      }
+
+      // Format date helper
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString('id-ID', options);
+      // Get local timezone dynamically (e.g. WIB, WITA, WIT)
+      let tzAbbr = 'WIB';
+      try {
+        const formatterTZ = new Intl.DateTimeFormat('id-ID', { timeZoneName: 'short' });
+        const tzPart = formatterTZ.formatToParts(today).find(p => p.type === 'timeZoneName');
+        if (tzPart) tzAbbr = tzPart.value;
+      } catch (e) {
+        console.error("Gagal mendapatkan timezone lokal, fallback ke WIB:", e);
+      }
+      document.getElementById("doc-date").textContent = today.toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) + " " + tzAbbr;
+      document.getElementById("signature-date").textContent = "Pontianak, " + formattedDate;
+
+      // Generate random document ID based on current timestamp with 3 random digits at the end
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const date = String(today.getDate()).padStart(2, '0');
+      const random3Digits = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+      const randomId = `LPT-${year}${month}${date}-${random3Digits}`;
+      document.getElementById("doc-id").textContent = randomId;
+
+      try {
+        const response = await fetch("../api_toko/cetak_laporan.php", {
+          method: "GET",
+          headers: {
+            "Authorization": token,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            alert("Akses Ditolak! Sesi Anda tidak valid atau telah kedaluwarsa. Silakan login kembali.");
+            localStorage.removeItem("token_toko");
+            if (window.opener && !window.opener.closed) {
+              window.opener.location.href = "login.html";
+            } else {
+              window.location.href = "login.html";
+              return;
+            }
+            window.close();
+            return;
+          }
+          const errText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errText}`);
+        }
+
+        const resData = await response.json();
+        
+        if (resData.status !== "success") {
+          throw new Error(resData.pesan || "Terjadi kesalahan server.");
+        }
+
+        const barangList = resData.data || [];
+        const totalAset = resData.total_aset || 0;
+
+        // Currency formatter
+        const formatter = new Intl.NumberFormat('id-ID', {
+          style: 'currency',
+          currency: 'IDR',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        });
+
+        const tbody = document.getElementById("table-body");
+        tbody.innerHTML = "";
+
+        if (barangList.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="3" style="text-align: center; font-style: italic; padding: 20px;">
+                Tidak ada data barang tersedia.
+              </td>
+            </tr>
+          `;
+        } else {
+          barangList.forEach((barang, index) => {
+            const tr = document.createElement("tr");
+            
+            const tdNo = document.createElement("td");
+            tdNo.className = "num-col";
+            tdNo.textContent = index + 1;
+            
+            const tdNama = document.createElement("td");
+            tdNama.textContent = barang.nama_barang;
+            
+            const tdHarga = document.createElement("td");
+            tdHarga.className = "price-col";
+            tdHarga.textContent = formatter.format(barang.harga);
+            
+            tr.appendChild(tdNo);
+            tr.appendChild(tdNama);
+            tr.appendChild(tdHarga);
+            
+            tbody.appendChild(tr);
+          });
+        }
+
+        document.getElementById("total-aset-label").textContent = `Total Aset (${barangList.length} Item) :`;
+        document.getElementById("total-aset-cell").textContent = formatter.format(totalAset);
+
+        // Hide loading and show sheet
+        loadingState.style.display = "none";
+        reportSheet.style.display = "flex";
+
+        // Memicu pencetakan setelah rendering selesai
+        setTimeout(() => {
+          window.print();
+          window.close();
+        }, 350);
+
+      } catch (err) {
+        console.error(err);
+        alert("Gagal memuat laporan: " + err.message);
+        window.close();
+      }
+    });
+  </script>
+</body>
+</html>
