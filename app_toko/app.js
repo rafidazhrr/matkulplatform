@@ -20,11 +20,16 @@ async function ambilDataBarang(force = false) {
   isFetching = true;
   try {
     // 2. Panggil Pelayan (Fetch) menuju URL API
-    const response = await fetch("../api_toko/get-barang.php", { credentials: 'include' });
+    const response = await fetch("../api_toko/get-barang.php", {
+      credentials: "include",
+    });
 
     // 3. Bongkar paket (Ubah string JSON jadi Object JS)
     const hasil = await response.json();
-    if (handleAuthError(hasil)) { isFetching = false; return; }
+    if (handleAuthError(hasil)) {
+      isFetching = false;
+      return;
+    }
 
     if (hasil.status === "success") {
       const newData = hasil.data || [];
@@ -110,7 +115,10 @@ function renderBarang(items) {
       hargaFormatted = parseFloat(barang.harga).toLocaleString("id-ID");
     }
     const animDelay = index * 100;
-    const imgSrc = barang.gambar && barang.gambar !== "" ? `../api_toko/uploads/${barang.gambar}` : "icons/image.png";
+    const imgSrc =
+      barang.gambar && barang.gambar !== ""
+        ? `../api_toko/uploads/${barang.gambar}`
+        : "icons/image.png";
     barisHTML += `
           <div class="group relative bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-6 transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_15px_40px_-10px_rgba(16,185,129,0.3)] hover:border-emerald-500/30 overflow-hidden cursor-pointer flex flex-col justify-between min-h-[160px] animate-[fadeInUp_0.6s_ease-out_forwards]" style="opacity: 0; animation-delay: ${animDelay}ms;">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -169,24 +177,25 @@ function renderPage(page) {
 }
 
 function updatePaginationControls(totalItems) {
-  const container = document.getElementById('pagination-controls');
+  const container = document.getElementById("pagination-controls");
   if (!container) return;
-  const prevBtn = document.getElementById('prev-page');
-  const nextBtn = document.getElementById('next-page');
-  const infoEl = document.getElementById('pagination-info');
+  const prevBtn = document.getElementById("prev-page");
+  const nextBtn = document.getElementById("next-page");
+  const infoEl = document.getElementById("pagination-info");
 
   totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   if (currentPage > totalPages) currentPage = totalPages;
 
   // Toggle visibility
   if (totalItems <= pageSize) {
-    container.style.display = 'none';
+    container.style.display = "none";
     return;
   } else {
-    container.style.display = 'flex';
+    container.style.display = "flex";
   }
 
-  if (infoEl) infoEl.textContent = `Halaman ${currentPage} dari ${totalPages} — Menampilkan ${Math.min((currentPage-1)*pageSize+1, totalItems)}-${Math.min(currentPage*pageSize, totalItems)} dari ${totalItems}`;
+  if (infoEl)
+    infoEl.textContent = `Halaman ${currentPage} dari ${totalPages} — Menampilkan ${Math.min((currentPage - 1) * pageSize + 1, totalItems)}-${Math.min(currentPage * pageSize, totalItems)} dari ${totalItems}`;
 
   if (prevBtn) {
     prevBtn.disabled = currentPage <= 1;
@@ -228,14 +237,20 @@ function createOrUpdateChart() {
 // Ambil data statistik dari endpoint khusus (fallback ke local jika gagal)
 async function fetchStatistik() {
   try {
-    const resp = await fetch("../api_toko/statistik.php", { credentials: 'include' });
+    const resp = await fetch("../api_toko/statistik.php", {
+      credentials: "include",
+    });
     const json = await resp.json().catch(() => null);
     if (!json) return null;
     if (handleAuthError(json)) return null;
     if (json.status && json.status === "success" && json.chart_data) {
       return {
-        labels: Array.isArray(json.chart_data.labels) ? json.chart_data.labels : [],
-        data: Array.isArray(json.chart_data.values) ? json.chart_data.values : [],
+        labels: Array.isArray(json.chart_data.labels)
+          ? json.chart_data.labels
+          : [],
+        data: Array.isArray(json.chart_data.values)
+          ? json.chart_data.values
+          : [],
       };
     }
   } catch (err) {
@@ -498,7 +513,7 @@ async function hapusBarang(id) {
     // catch akan menampilkan error.
     const response = await fetch("../api_toko/hapus-barang.php", {
       method: "POST",
-      credentials: 'include',
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Authorization: localStorage.getItem("token_toko") || "",
@@ -552,14 +567,18 @@ async function editBarang(id) {
     inputNama.value = item.nama_barang || "";
     inputHarga.value = item.harga || "";
     // reset file input value
-    try { fileInput.value = null; } catch (e) { /* ignore */ }
+    try {
+      fileInput.value = null;
+    } catch (e) {
+      /* ignore */
+    }
 
     // Tampilkan preview jika ada gambar
     if (item.gambar && item.gambar !== "") {
       previewImg.src = `../api_toko/uploads/${item.gambar}`;
       previewWrapper.classList.remove("hidden");
     } else {
-      previewImg.src = 'icons/image.png';
+      previewImg.src = "icons/image.png";
       previewWrapper.classList.remove("hidden");
     }
 
@@ -570,7 +589,7 @@ async function editBarang(id) {
     // fokus ke nama
     inputNama.focus();
     // scroll ke form
-    inputNama.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    inputNama.scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (err) {
     console.error("editBarang error:", err);
     showToast("Gagal mengisi form edit.", "error");
@@ -625,7 +644,7 @@ formTambah.addEventListener("submit", async function (event) {
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      credentials: 'include',
+      credentials: "include",
       headers: {
         Authorization: localStorage.getItem("token_toko") || "",
       },
@@ -651,7 +670,9 @@ formTambah.addEventListener("submit", async function (event) {
       }
       // revoke any preview URL (add or edit)
       if (lastPreviewUrl) {
-        try { URL.revokeObjectURL(lastPreviewUrl); } catch (e) {}
+        try {
+          URL.revokeObjectURL(lastPreviewUrl);
+        } catch (e) {}
         lastPreviewUrl = null;
       }
 
@@ -659,9 +680,11 @@ formTambah.addEventListener("submit", async function (event) {
       const fileInputClear = document.getElementById("input-gambar");
       const previewWrapperClear = document.getElementById("preview-wrapper");
       const previewImgClear = document.getElementById("preview-gambar");
-      try { if (fileInputClear) fileInputClear.value = null; } catch (e) {}
+      try {
+        if (fileInputClear) fileInputClear.value = null;
+      } catch (e) {}
       if (previewWrapperClear) previewWrapperClear.classList.add("hidden");
-      if (previewImgClear) previewImgClear.src = 'icons/image.png';
+      if (previewImgClear) previewImgClear.src = "icons/image.png";
 
       formTambah.reset(); // Kosongkan form
       ambilDataBarang(); // Refresh daftar
@@ -670,8 +693,8 @@ formTambah.addEventListener("submit", async function (event) {
         hasil && (hasil.message || hasil.pesan)
           ? `Gagal: ${hasil.message || hasil.pesan}`
           : editingId
-          ? "Gagal memperbarui data."
-          : "Gagal menambahkan data.",
+            ? "Gagal memperbarui data."
+            : "Gagal menambahkan data.",
         "error",
       );
     }
@@ -694,10 +717,12 @@ if (btnCancelEdit) {
     const previewWrapper = document.getElementById("preview-wrapper");
     const previewImg = document.getElementById("preview-gambar");
     if (previewWrapper) previewWrapper.classList.add("hidden");
-    if (previewImg) previewImg.src = 'icons/image.png';
+    if (previewImg) previewImg.src = "icons/image.png";
     // revoke any created object URL
     if (lastPreviewUrl) {
-      try { URL.revokeObjectURL(lastPreviewUrl); } catch (e) {}
+      try {
+        URL.revokeObjectURL(lastPreviewUrl);
+      } catch (e) {}
       lastPreviewUrl = null;
     }
     // hide the cancel button itself
@@ -718,7 +743,9 @@ if (fileInputEl) {
       try {
         // revoke previous URL
         if (lastPreviewUrl) {
-          try { URL.revokeObjectURL(lastPreviewUrl); } catch (er) {}
+          try {
+            URL.revokeObjectURL(lastPreviewUrl);
+          } catch (er) {}
           lastPreviewUrl = null;
         }
         lastPreviewUrl = URL.createObjectURL(e.target.files[0]);
@@ -729,9 +756,11 @@ if (fileInputEl) {
       }
     } else {
       if (previewWrapper) previewWrapper.classList.add("hidden");
-      if (previewImg) previewImg.src = 'icons/image.png';
+      if (previewImg) previewImg.src = "icons/image.png";
       if (lastPreviewUrl) {
-        try { URL.revokeObjectURL(lastPreviewUrl); } catch (er) {}
+        try {
+          URL.revokeObjectURL(lastPreviewUrl);
+        } catch (er) {}
         lastPreviewUrl = null;
       }
     }
@@ -767,7 +796,7 @@ if (inputSearch) {
   });
 }
 
-const myToken = localStorage.getItem('token_toko');
+const myToken = localStorage.getItem("token_toko");
 
 if (!myToken) {
   try {
