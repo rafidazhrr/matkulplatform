@@ -31,6 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($_POST) || !empty($_FILES))
     $id = isset($_POST['id']) ? mysqli_real_escape_string($koneksi, $_POST['id']) : '';
     $nama = isset($_POST['nama_barang']) ? mysqli_real_escape_string($koneksi, $_POST['nama_barang']) : '';
     $harga = isset($_POST['harga']) ? mysqli_real_escape_string($koneksi, $_POST['harga']) : '';
+    $kode_qr = isset($_POST['kode_qr']) ? mysqli_real_escape_string($koneksi, trim($_POST['kode_qr'])) : '';
+    $latitude = isset($_POST['latitude']) ? mysqli_real_escape_string($koneksi, trim($_POST['latitude'])) : '';
+    $longitude = isset($_POST['longitude']) ? mysqli_real_escape_string($koneksi, trim($_POST['longitude'])) : '';
 
     if ($id === '' || $nama === '' || $harga === '') {
         echo json_encode(["status" => "error", "pesan" => "Data tidak lengkap!"]);
@@ -66,12 +69,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($_POST) || !empty($_FILES))
         }
     }
 
+    $kode_qr_val = $kode_qr !== '' ? "'$kode_qr'" : "NULL";
+    $lat_val = $latitude !== '' ? "'$latitude'" : "NULL";
+    $lng_val = $longitude !== '' ? "'$longitude'" : "NULL";
+
     // Build query
     if ($newGambar !== null) {
         $g = mysqli_real_escape_string($koneksi, $newGambar);
-        $query = "UPDATE barang SET nama_barang='$nama', harga='$harga', gambar='$g' WHERE id='$id'";
+        $query = "UPDATE barang SET nama_barang='$nama', harga='$harga', gambar='$g', kode_qr=$kode_qr_val, latitude=$lat_val, longitude=$lng_val WHERE id='$id'";
     } else {
-        $query = "UPDATE barang SET nama_barang='$nama', harga='$harga' WHERE id='$id'";
+        $query = "UPDATE barang SET nama_barang='$nama', harga='$harga', kode_qr=$kode_qr_val, latitude=$lat_val, longitude=$lng_val WHERE id='$id'";
     }
 
     if (mysqli_query($koneksi, $query)) {
@@ -93,8 +100,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($_POST) || !empty($_FILES))
         $id = mysqli_real_escape_string($koneksi, $data['id']);
         $nama = mysqli_real_escape_string($koneksi, $data['nama_barang']);
         $harga = mysqli_real_escape_string($koneksi, $data['harga']);
+        $kode_qr = isset($data['kode_qr']) ? mysqli_real_escape_string($koneksi, trim($data['kode_qr'])) : '';
+        $latitude = isset($data['latitude']) ? mysqli_real_escape_string($koneksi, trim($data['latitude'])) : '';
+        $longitude = isset($data['longitude']) ? mysqli_real_escape_string($koneksi, trim($data['longitude'])) : '';
 
-        $query = "UPDATE barang SET nama_barang = '$nama', harga = '$harga' WHERE id = '$id'";
+        $kode_qr_val = $kode_qr !== '' ? "'$kode_qr'" : "NULL";
+        $lat_val = $latitude !== '' ? "'$latitude'" : "NULL";
+        $lng_val = $longitude !== '' ? "'$longitude'" : "NULL";
+
+        $query = "UPDATE barang SET nama_barang = '$nama', harga = '$harga', kode_qr = $kode_qr_val, latitude = $lat_val, longitude = $lng_val WHERE id = '$id'";
 
         if (mysqli_query($koneksi, $query)) {
             echo json_encode(["status" => "success", "pesan" => "Data berhasil diperbarui!"]);

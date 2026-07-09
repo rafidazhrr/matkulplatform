@@ -35,7 +35,7 @@ async function ambilDataBarang(force = false) {
       const newData = hasil.data || [];
       // buat signature sederhana untuk deteksi perubahan
       const signature = newData
-        .map((d) => `${d.id}:${d.nama_barang}:${d.harga}:${d.gambar || ""}`)
+        .map((d) => `${d.id}:${d.nama_barang}:${d.harga}:${d.gambar || ""}:${d.kode_qr || ""}:${d.latitude || ""}:${d.longitude || ""}`)
         .join("|");
 
       if (!force && signature === lastDataSignature) {
@@ -69,7 +69,7 @@ async function ambilDataBarang(force = false) {
       try {
         const p = document.getElementById("pagination-controls");
         if (p) p.style.display = "none";
-      } catch (e) {}
+      } catch (e) { }
     }
   } catch (error) {
     console.error("Gagal mengambil data:", error);
@@ -85,7 +85,7 @@ async function ambilDataBarang(force = false) {
     try {
       const p = document.getElementById("pagination-controls");
       if (p) p.style.display = "none";
-    } catch (e) {}
+    } catch (e) { }
   } finally {
     isFetching = false;
   }
@@ -119,42 +119,77 @@ function renderBarang(items) {
       barang.gambar && barang.gambar !== ""
         ? `../api_toko/uploads/${barang.gambar}`
         : "icons/image.png";
-    barisHTML += `
-          <div class="group relative bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-6 transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_15px_40px_-10px_rgba(16,185,129,0.3)] hover:border-emerald-500/30 overflow-hidden cursor-pointer flex flex-col justify-between min-h-[160px] animate-[fadeInUp_0.6s_ease-out_forwards]" style="opacity: 0; animation-delay: ${animDelay}ms;">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div class="relative z-10 flex items-center justify-center flex-col">
-              <div class="w-full flex items-center justify-center mb-3">
-                <img src="${imgSrc}" alt="${barang.nama_barang}" class="w-full max-w-[240px] h-36 object-cover rounded-xl" onerror="this.src='icons/image.png'" />
-              </div>
-              <h3 class="text-xl md:text-2xl text-center font-bold text-white font-display leading-tight tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-300 transition-all duration-300 line-clamp-2">
-                ${barang.nama_barang}
-              </h3>
-            </div>
-            <div class="relative z-10 flex items-baseline mt-6 pt-5 border-t border-slate-700/50 group-hover:border-slate-600/50 transition-colors duration-300">
-              <span class="text-emerald-500 font-semibold text-lg mr-1.5 font-sans">Rp</span>
-              <span class="text-3xl lg:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 drop-shadow-sm group-hover:from-emerald-300 group-hover:to-cyan-300 transition-all duration-300 font-display">
-                ${hargaFormatted}
-              </span>
-            </div>
-            <div class="relative mt-6 flex justify-end z-10 space-x-3">
-              <!-- Tombol Edit (sesuai tema: emerald->cyan) -->
-              <button onclick="editBarang(${barang.id})" class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white px-3 py-2 rounded-lg shadow-sm transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M3 21l4.768-1.265 12.238-12.239L15.232 5.232 2 18.464V21z" />
-                </svg>
-                Edit
-              </button>
 
-              <!-- Tombol Hapus yang mengikuti tema (gradien + radius) -->
-              <button onclick="hapusBarang(${barang.id})" class="inline-flex items-center gap-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-3 py-2 rounded-lg shadow-sm transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
-                </svg>
-                Hapus
-              </button>
+    const badgeQr = barang.kode_qr
+      ? `<div class="mt-2 inline-flex items-center gap-1.5 bg-slate-900/60 border border-slate-700/50 text-emerald-400 font-mono text-[10px] font-semibold px-2 py-1 rounded-lg max-w-full">
+           <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M8 8h.01M8 12h.01M8 16h.01M12 16h.01" />
+           </svg>
+           <span class="truncate max-w-[140px]" title="${barang.kode_qr}">${barang.kode_qr}</span>
+         </div>`
+      : "";
+
+    const linkMaps = (barang.latitude && barang.longitude)
+      ? `<a href="https://maps.google.com/?q=${barang.latitude},${barang.longitude}" target="_blank" class="absolute top-2.5 right-2.5 z-20 flex items-center justify-center w-7 h-7 text-cyan-400 hover:text-cyan-300 bg-slate-900/90 hover:bg-slate-900 border border-slate-700/50 rounded-lg transition-all duration-300 shadow-md hover:scale-105" title="Buka Google Maps">
+           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+             <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+           </svg>
+         </a>`
+      : "";
+
+    barisHTML += `
+          <div id="row-${barang.id}" class="group bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-5 hover:border-emerald-500/30 transition-all duration-300 flex flex-col justify-between min-h-[380px] animate-[fadeInUp_0.6s_ease-out_forwards] hover:shadow-[0_15px_30px_rgba(16,185,129,0.15)] relative overflow-hidden" style="opacity: 0; animation-delay: ${animDelay}ms; transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+            <!-- Image Container -->
+            <div class="w-full h-40 bg-slate-950/60 rounded-2xl border border-slate-800/80 overflow-hidden flex items-center justify-center mb-4 relative z-10 group-hover:border-slate-700/50 transition-colors">
+              <img src="${imgSrc}" alt="${barang.nama_barang}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='icons/image.png'" />
+              ${linkMaps}
             </div>
-            <div class="absolute -bottom-12 -right-12 w-40 h-40 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-500/20 transition-all duration-700 pointer-events-none"></div>
-            <div class="absolute top-10 -left-12 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none"></div>
+
+            <!-- Card Body & Details -->
+            <div class="flex-grow flex flex-col justify-between z-10">
+              <div>
+                <h3 class="text-base md:text-lg font-bold text-white font-display leading-snug tracking-tight mb-1 line-clamp-2 group-hover:text-emerald-400 transition-colors duration-300">
+                  ${barang.nama_barang}
+                </h3>
+                ${badgeQr}
+              </div>
+              
+              <div>
+                <!-- Price Section -->
+                <div class="flex items-baseline mt-4 pt-4 border-t border-slate-700/40">
+                  <span class="text-emerald-500 font-semibold text-xs mr-1 font-sans">Rp</span>
+                  <span class="text-xl md:text-2xl font-extrabold text-white font-display">
+                    ${hargaFormatted}
+                  </span>
+                </div>
+
+                <!-- Actions Container -->
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                  <!-- Tombol Edit -->
+                  <button onclick="editBarang(${barang.id})" class="inline-flex items-center justify-center gap-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700/50 py-2 px-3 rounded-xl text-xs font-semibold shadow-sm transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M3 21l4.768-1.265 12.238-12.239L15.232 5.232 2 18.464V21z" />
+                    </svg>
+                    Edit
+                  </button>
+
+                  <!-- Tombol Hapus -->
+                  <button onclick="hapusBarang(${barang.id})" class="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-red-500/10 to-rose-500/10 hover:from-red-500/20 hover:to-rose-500/20 text-red-400 border border-red-500/20 py-2 px-3 rounded-xl text-xs font-semibold shadow-sm transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
+                    </svg>
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Background decorative gradients -->
+            <div class="absolute -bottom-12 -right-12 w-36 h-36 bg-cyan-500/5 blur-3xl rounded-full group-hover:bg-cyan-500/10 transition-all duration-700 pointer-events-none"></div>
+            <div class="absolute top-10 -left-12 w-28 h-28 bg-emerald-500/5 blur-3xl rounded-full group-hover:bg-emerald-500/10 transition-all duration-700 pointer-events-none"></div>
           </div>
         `;
   });
@@ -546,7 +581,7 @@ async function hapusBarang(id) {
 
     if (hasil && hasil.status === "success") {
       showToast("Data berhasil dihapus.", "success");
-      ambilDataBarang();
+      ambilDataBarang(true);
     } else {
       showToast(
         hasil && (hasil.message || hasil.pesan)
@@ -584,6 +619,26 @@ async function editBarang(id) {
     inputId.value = editingId;
     inputNama.value = item.nama_barang || "";
     inputHarga.value = item.harga || "";
+
+    // QR and GPS inputs
+    const inputQr = document.getElementById("form-kode-qr");
+    const inputLat = document.getElementById("form-latitude");
+    const inputLng = document.getElementById("form-longitude");
+    const btnGps = document.getElementById("btn-lacak-gps");
+
+    if (inputQr) inputQr.value = item.kode_qr || "";
+    if (inputLat) inputLat.value = item.latitude || "";
+    if (inputLng) inputLng.value = item.longitude || "";
+    if (btnGps) {
+      if (item.latitude && item.longitude) {
+        btnGps.innerHTML = "[OK] Lokasi Terkunci";
+        btnGps.style.background = "#10b981"; // emerald color background
+      } else {
+        btnGps.innerHTML = "📍 Lacak GPS";
+        btnGps.style.background = "";
+      }
+    }
+
     // reset file input value
     try {
       fileInput.value = null;
@@ -641,12 +696,18 @@ formTambah.addEventListener("submit", async function (event) {
   // 1. Ambil nilai yang diketik user di kotak input
   const namaVal = document.getElementById("input-nama").value;
   const hargaVal = document.getElementById("input-harga").value;
+  const qrVal = document.getElementById("form-kode-qr").value;
+  const latVal = document.getElementById("form-latitude").value;
+  const lngVal = document.getElementById("form-longitude").value;
 
   // 2. Buat FormData agar bisa mengirim file
   const fileInput = document.getElementById("input-gambar");
   const fd = new FormData();
   fd.append("nama_barang", namaVal);
   fd.append("harga", hargaVal);
+  fd.append("kode_qr", qrVal);
+  fd.append("latitude", latVal);
+  fd.append("longitude", lngVal);
   if (fileInput && fileInput.files && fileInput.files[0]) {
     fd.append("gambar", fileInput.files[0]);
   }
@@ -690,7 +751,7 @@ formTambah.addEventListener("submit", async function (event) {
       if (lastPreviewUrl) {
         try {
           URL.revokeObjectURL(lastPreviewUrl);
-        } catch (e) {}
+        } catch (e) { }
         lastPreviewUrl = null;
       }
 
@@ -700,12 +761,20 @@ formTambah.addEventListener("submit", async function (event) {
       const previewImgClear = document.getElementById("preview-gambar");
       try {
         if (fileInputClear) fileInputClear.value = null;
-      } catch (e) {}
+      } catch (e) { }
       if (previewWrapperClear) previewWrapperClear.classList.add("hidden");
       if (previewImgClear) previewImgClear.src = "icons/image.png";
 
+      // Reset GPS button status
+      const btnGps = document.getElementById("btn-lacak-gps");
+      if (btnGps) {
+        btnGps.innerHTML = "📍 Lacak GPS";
+        btnGps.style.background = "";
+        btnGps.disabled = false;
+      }
+
       formTambah.reset(); // Kosongkan form
-      ambilDataBarang(); // Refresh daftar
+      ambilDataBarang(true); // Refresh daftar (paksa render)
     } else {
       showToast(
         hasil && (hasil.message || hasil.pesan)
@@ -736,11 +805,20 @@ if (btnCancelEdit) {
     const previewImg = document.getElementById("preview-gambar");
     if (previewWrapper) previewWrapper.classList.add("hidden");
     if (previewImg) previewImg.src = "icons/image.png";
+
+    // Reset GPS button status
+    const btnGps = document.getElementById("btn-lacak-gps");
+    if (btnGps) {
+      btnGps.innerHTML = "📍 Lacak GPS";
+      btnGps.style.background = "";
+      btnGps.disabled = false;
+    }
+
     // revoke any created object URL
     if (lastPreviewUrl) {
       try {
         URL.revokeObjectURL(lastPreviewUrl);
-      } catch (e) {}
+      } catch (e) { }
       lastPreviewUrl = null;
     }
     // hide the cancel button itself
@@ -763,7 +841,7 @@ if (fileInputEl) {
         if (lastPreviewUrl) {
           try {
             URL.revokeObjectURL(lastPreviewUrl);
-          } catch (er) {}
+          } catch (er) { }
           lastPreviewUrl = null;
         }
         lastPreviewUrl = URL.createObjectURL(e.target.files[0]);
@@ -778,7 +856,7 @@ if (fileInputEl) {
       if (lastPreviewUrl) {
         try {
           URL.revokeObjectURL(lastPreviewUrl);
-        } catch (er) {}
+        } catch (er) { }
         lastPreviewUrl = null;
       }
     }
@@ -804,7 +882,8 @@ if (inputSearch) {
         const nama = (b.nama_barang || "").toLowerCase();
         const harga = String(b.harga || "").toLowerCase();
         const id = String(b.id || "").toLowerCase();
-        return nama.includes(q) || harga.includes(q) || id.includes(q);
+        const qr = String(b.kode_qr || "").toLowerCase();
+        return nama.includes(q) || harga.includes(q) || id.includes(q) || qr.includes(q);
       });
       currentViewData = filtered;
       currentPage = 1;
@@ -849,4 +928,305 @@ if (btnCetak) {
   btnCetak.addEventListener("click", () => {
     window.open("cetak.html", "_blank");
   });
+}
+
+// -- STATE GLOBAL SMART QR & GPS ---------------------------------
+let _mainQrScanner = null;   // Instance scanner di modal utama
+let _formQrScanner = null;   // Instance scanner di modal form
+let _qrLastResult = null;   // Simpan hasil lookup: { kodeQr, barang }
+let _qrModalMode = 'search'; // Mode modal QR scanner: 'search' atau 'tambah'
+
+// -- 1. BUKA MODAL SCANNER ------------------------------------
+function bukaModalQrScan(mode) {
+  _qrLastResult = null;
+  _qrModalMode = mode;
+
+  const modal = document.getElementById('modal-qr-scan');
+  const titleEl = document.getElementById('qr-modal-title');
+  const hintEl = document.getElementById('qr-modal-hint');
+
+  if (titleEl) {
+    titleEl.textContent = mode === 'tambah' ? 'Scan QR → Tambah Barang' : 'Scan QR → Cari Barang';
+  }
+  if (hintEl) {
+    hintEl.textContent = mode === 'tambah'
+      ? 'Jika belum ada, form tambah akan ter-prefill otomatis.'
+      : 'Jika ditemukan di database, barang akan langsung dicari dan di-highlight.';
+  }
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  initMainQrScanner(); // Nyalakan kamera
+}
+
+// -- 2. INIT SCANNER KAMERA UTAMA ------------------------------
+function initMainQrScanner() {
+  if (_mainQrScanner) return; // Jangan dobel
+
+  // Html5QrcodeScanner requires element ID
+  _mainQrScanner = new Html5QrcodeScanner(
+    'qr-reader-main',
+    {
+      fps: 10,
+      qrbox: { width: 240, height: 240 },
+      aspectRatio: 1.0
+    },
+    false
+  );
+
+  _mainQrScanner.render(
+    async function (decodedText) {      // <- CALLBACK SUKSES
+      // Jeda scanner
+      try {
+        if (_mainQrScanner) _mainQrScanner.pause(true);
+      } catch (e) { }
+
+      tampilQrStatus(decodedText, 'loading');
+
+      // Cek ke API
+      try {
+        const response = await fetch(`../api_toko/get-barang.php?kode_qr=${encodeURIComponent(decodedText)}`, {
+          credentials: 'include'
+        });
+        const hasil = await response.json();
+
+        if (hasil.status === 'success' && hasil.data) {
+          _qrLastResult = { kodeQr: decodedText, barang: hasil.data };
+          tampilQrStatus(decodedText, 'found', hasil.data);
+        } else {
+          _qrLastResult = { kodeQr: decodedText, barang: null };
+          tampilQrStatus(decodedText, 'notfound');
+        }
+      } catch (err) {
+        console.error("API check failed:", err);
+        _qrLastResult = { kodeQr: decodedText, barang: null };
+        tampilQrStatus(decodedText, 'notfound');
+      }
+    },
+    function () { } // <- CALLBACK GAGAL: diabaikan
+  );
+}
+
+// -- 3. TAMPILKAN STATUS HASIL SCAN --------------------------
+function tampilQrStatus(kode, state, barang) {
+  const statusBox = document.getElementById('qr-status-box');
+  const scannedText = document.getElementById('qr-scanned-text');
+
+  if (statusBox) statusBox.classList.remove('hidden');
+  if (scannedText) scannedText.textContent = kode;
+
+  const stateLoading = document.getElementById('qr-state-loading');
+  const stateFound = document.getElementById('qr-state-found');
+  const stateNotFound = document.getElementById('qr-state-notfound');
+
+  if (stateLoading) stateLoading.classList.add('hidden');
+  if (stateFound) stateFound.classList.add('hidden');
+  if (stateNotFound) stateNotFound.classList.add('hidden');
+
+  if (state === 'loading') {
+    if (stateLoading) {
+      stateLoading.classList.remove('hidden');
+      stateLoading.classList.add('flex');
+    }
+  } else if (state === 'found' && barang) {
+    const foundNama = document.getElementById('qr-found-nama');
+    const foundHarga = document.getElementById('qr-found-harga');
+    if (foundNama) foundNama.textContent = barang.nama_barang || '';
+    if (foundHarga) {
+      let prc = barang.harga;
+      if (!isNaN(parseFloat(barang.harga)) && isFinite(barang.harga)) {
+        prc = parseFloat(barang.harga).toLocaleString('id-ID');
+      }
+      foundHarga.textContent = 'Rp ' + prc;
+    }
+    if (stateFound) stateFound.classList.remove('hidden');
+  } else {
+    if (stateNotFound) stateNotFound.classList.remove('hidden');
+  }
+}
+
+// -- 4. AKSI: Barang DITEMUKAN -> tampilkan di tabel / grid ---
+function eksekusiQrFound() {
+  if (!_qrLastResult || !_qrLastResult.barang) return;
+
+  const kode = _qrLastResult.kodeQr;
+  const searchInput = document.getElementById('input-search');
+
+  tutupModalQrScan();
+
+  if (searchInput) {
+    searchInput.value = kode;
+    // Trigger search
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  showToast('🔎 Menampilkan barang: ' + _qrLastResult.barang.nama_barang, 'info');
+
+  // Highlight card setelah data dimuat / dicari
+  setTimeout(() => {
+    const barang = _qrLastResult.barang;
+    if (barang && barang.id) {
+      const card = document.getElementById(`row-${barang.id}`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // apply glow highlight
+        card.style.borderColor = '#10b981';
+        card.style.boxShadow = '0 0 25px rgba(16, 185, 129, 0.4)';
+        card.style.transform = 'scale(1.03)';
+
+        setTimeout(() => {
+          card.style.borderColor = '';
+          card.style.boxShadow = '';
+          card.style.transform = '';
+        }, 2500);
+      }
+    }
+  }, 400);
+}
+
+// -- 5. AKSI: Barang BARU -> buka form tambah + prefill --------
+function eksekusiQrTambah() {
+  if (!_qrLastResult) return;
+  const kode = _qrLastResult.kodeQr;
+  tutupModalQrScan();
+
+  setTimeout(() => {
+    // Focus ke form tambah
+    const inputQr = document.getElementById('form-kode-qr');
+    if (inputQr) {
+      inputQr.value = kode;
+      inputQr.style.borderColor = '#10b981'; // Highlight hijau
+      setTimeout(() => inputQr.style.borderColor = '', 2000);
+    }
+
+    const inputNama = document.getElementById('input-nama');
+    if (inputNama) {
+      inputNama.focus();
+      inputNama.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    showToast(`📦 Kode "${kode}" terisi. Lengkapi nama & harga.`, 'info');
+  }, 300);
+}
+
+// -- 6. RESET & SCAN ULANG ------------------------------------
+function resetQrScanner() {
+  if (_mainQrScanner) {
+    _mainQrScanner.clear().catch(() => { });
+    _mainQrScanner = null;
+  }
+  const readerMain = document.getElementById('qr-reader-main');
+  if (readerMain) readerMain.innerHTML = '';
+
+  const statusBox = document.getElementById('qr-status-box');
+  if (statusBox) statusBox.classList.add('hidden');
+
+  setTimeout(initMainQrScanner, 100); // Re-init scanner
+}
+
+// -- 7. TUTUP MODAL SCANNER UTAMA ------------------------------
+function tutupModalQrScan() {
+  if (_mainQrScanner) {
+    _mainQrScanner.clear().catch(() => { });
+    _mainQrScanner = null;
+  }
+  const readerMain = document.getElementById('qr-reader-main');
+  if (readerMain) readerMain.innerHTML = '';
+
+  const statusBox = document.getElementById('qr-status-box');
+  if (statusBox) statusBox.classList.add('hidden');
+
+  const modal = document.getElementById('modal-qr-scan');
+  if (modal) {
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+  }
+}
+
+// -- 8. INLINE FORM SCANNER ------------------------------------
+function toggleFormScanner() {
+  const formReader = document.getElementById('form-reader');
+  if (!formReader) return;
+
+  if (formReader.classList.contains('hidden')) {
+    formReader.classList.remove('hidden');
+
+    _formQrScanner = new Html5QrcodeScanner(
+      'form-reader',
+      { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
+      false
+    );
+
+    _formQrScanner.render(
+      function (decodedText) {
+        const inputQr = document.getElementById('form-kode-qr');
+        if (inputQr) {
+          inputQr.value = decodedText;
+          inputQr.style.borderColor = '#10b981';
+          setTimeout(() => inputQr.style.borderColor = '', 2000);
+        }
+        showToast(`📷 QR Code berhasil dipindai!`, 'success');
+
+        // stop scanner
+        if (_formQrScanner) {
+          _formQrScanner.clear().catch(() => { });
+          _formQrScanner = null;
+        }
+        formReader.classList.add('hidden');
+        formReader.innerHTML = '';
+      },
+      function () { }
+    );
+  } else {
+    if (_formQrScanner) {
+      _formQrScanner.clear().catch(() => { });
+      _formQrScanner = null;
+    }
+    formReader.classList.add('hidden');
+    formReader.innerHTML = '';
+  }
+}
+
+// -- 9. GEOLOKASI GPS -----------------------------------------
+function dapatkanLokasi() {
+  const btnGps = document.getElementById('btn-lacak-gps');
+  const inputLat = document.getElementById('form-latitude');
+  const inputLng = document.getElementById('form-longitude');
+
+  if (!navigator.geolocation) {
+    showToast('Browser tidak mendukung Geolocation.', 'error');
+    return;
+  }
+
+  if (btnGps) {
+    btnGps.disabled = true;
+    btnGps.innerHTML = '⏳ Melacak...';
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function (position) {
+      if (inputLat) inputLat.value = position.coords.latitude.toFixed(7);
+      if (inputLng) inputLng.value = position.coords.longitude.toFixed(7);
+      showToast('📍 Lokasi GPS berhasil dikunci!', 'success');
+      if (btnGps) {
+        btnGps.disabled = false;
+        btnGps.innerHTML = '[OK] Lokasi Terkunci';
+        btnGps.style.background = '#10b981'; // emerald
+      }
+    },
+    function (error) {
+      console.error("GPS track failed:", error);
+      showToast('Gagal. Pastikan GPS aktif dan izin diberikan.', 'error');
+      if (btnGps) {
+        btnGps.disabled = false;
+        btnGps.innerHTML = '📍 Lacak GPS';
+        btnGps.style.background = '';
+      }
+    },
+    { enableHighAccuracy: true, timeout: 7000 }
+  );
 }

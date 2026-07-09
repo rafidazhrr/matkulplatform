@@ -36,6 +36,9 @@ $gambar_filename = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($_POST) || !empty($_FILES))) {
     $nama = isset($_POST['nama_barang']) ? mysqli_real_escape_string($koneksi, $_POST['nama_barang']) : '';
     $harga = isset($_POST['harga']) ? mysqli_real_escape_string($koneksi, $_POST['harga']) : '';
+    $kode_qr = isset($_POST['kode_qr']) ? mysqli_real_escape_string($koneksi, trim($_POST['kode_qr'])) : '';
+    $latitude = isset($_POST['latitude']) ? mysqli_real_escape_string($koneksi, trim($_POST['latitude'])) : '';
+    $longitude = isset($_POST['longitude']) ? mysqli_real_escape_string($koneksi, trim($_POST['longitude'])) : '';
 
     // Proses file jika ada
     if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] === UPLOAD_ERR_OK) {
@@ -58,11 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($_POST) || !empty($_FILES))
     }
 
     if ($nama !== '' && $harga !== '') {
+        $kode_qr_val = $kode_qr !== '' ? "'$kode_qr'" : "NULL";
+        $lat_val = $latitude !== '' ? "'$latitude'" : "NULL";
+        $lng_val = $longitude !== '' ? "'$longitude'" : "NULL";
+
         if ($gambar_filename !== null) {
             $gambar_db = mysqli_real_escape_string($koneksi, $gambar_filename);
-            $query = "INSERT INTO barang (nama_barang, harga, gambar) VALUES ('$nama', '$harga', '$gambar_db')";
+            $query = "INSERT INTO barang (nama_barang, harga, gambar, kode_qr, latitude, longitude) VALUES ('$nama', '$harga', '$gambar_db', $kode_qr_val, $lat_val, $lng_val)";
         } else {
-            $query = "INSERT INTO barang (nama_barang, harga) VALUES ('$nama', '$harga')";
+            $query = "INSERT INTO barang (nama_barang, harga, kode_qr, latitude, longitude) VALUES ('$nama', '$harga', $kode_qr_val, $lat_val, $lng_val)";
         }
 
         if (mysqli_query($koneksi, $query)) {
@@ -81,7 +88,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!empty($_POST) || !empty($_FILES))
     if (isset($data['nama_barang']) && isset($data['harga'])) {
         $nama = mysqli_real_escape_string($koneksi, $data['nama_barang']);
         $harga = mysqli_real_escape_string($koneksi, $data['harga']);
-        $query = "INSERT INTO barang (nama_barang, harga) VALUES ('$nama', '$harga')";
+        $kode_qr = isset($data['kode_qr']) ? mysqli_real_escape_string($koneksi, trim($data['kode_qr'])) : '';
+        $latitude = isset($data['latitude']) ? mysqli_real_escape_string($koneksi, trim($data['latitude'])) : '';
+        $longitude = isset($data['longitude']) ? mysqli_real_escape_string($koneksi, trim($data['longitude'])) : '';
+
+        $kode_qr_val = $kode_qr !== '' ? "'$kode_qr'" : "NULL";
+        $lat_val = $latitude !== '' ? "'$latitude'" : "NULL";
+        $lng_val = $longitude !== '' ? "'$longitude'" : "NULL";
+
+        $query = "INSERT INTO barang (nama_barang, harga, kode_qr, latitude, longitude) VALUES ('$nama', '$harga', $kode_qr_val, $lat_val, $lng_val)";
         if (mysqli_query($koneksi, $query)) {
             echo json_encode(["status" => "success", "pesan" => "Data barang berhasil disimpan!"]);
         } else {
